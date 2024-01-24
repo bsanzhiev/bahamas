@@ -11,6 +11,17 @@ func main() {
 	// Создаем новый экземпляр Fiber
 	app := fiber.New()
 
+	// Middleware for check auth token
+	app.Use(func(c *fiber.Ctx) error {
+		token := c.Get("Authorization")
+
+		if token == "" {
+			return c.Redirect("/login")
+		}
+
+		return c.Next()
+	})
+
 	// Определяем обработчик для эндпойнта /api - для примера
 	app.Get("/api", func(c *fiber.Ctx) error {
 		// Получаем URL удаленного сервера, к которому будем проксировать запрос
