@@ -25,7 +25,7 @@ func StartGateway() {
 	// Определяем обработчик для эндпойнта /api - для примера
 	app.Get("/api", func(c *fiber.Ctx) error {
 		// Получаем URL удаленного сервера, к которому будем проксировать запрос
-		remoteURL := "http://localhost:8080"
+		remoteURL := "http://localhost:9090"
 
 		// Создаем новый запрос на основе текущего запроса от клиента
 		req := c.Request()
@@ -65,7 +65,7 @@ func StartGateway() {
 	})
 
 	go func() {
-		if err := fasthttp.ListenAndServe(":8080", app.Handler()); err != nil {
+		if err := fasthttp.ListenAndServe(":9080", app.Handler()); err != nil {
 			fmt.Printf("Error starting server: %s\n", err)
 		}
 	}()
