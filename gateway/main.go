@@ -44,10 +44,22 @@ func main() {
 
 		// Copy the status code and response body from the remote server to client
 		c.Status(statusCode)
-		c.SendString("Proxy Response:\n")
-		c.SendString(fmt.Sprintf("Status Code: %d\n", statusCode))
-		c.SendString("Body:\n")
-		c.Send(body)
+		err1 := c.SendString("Proxy Response:\n")
+		if err1 != nil {
+			return err1
+		}
+		err2 := c.SendString(fmt.Sprintf("Status Code: %d\n", statusCode))
+		if err2 != nil {
+			return err2
+		}
+		err3 := c.SendString("Body:\n")
+		if err3 != nil {
+			return err3
+		}
+		err4 := c.Send(body)
+		if err4 != nil {
+			return err4
+		}
 
 		return nil
 	})
