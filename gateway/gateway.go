@@ -6,8 +6,14 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/proxy"
 )
+
+func Alive(c *fiber.Ctx) error {
+	defer func() {
+		c.JSON(fiber.Map{"alive": true, "ready": true})
+	}()
+	return nil
+}
 
 func StartGateway() {
 	// Создаем новый экземпляр Fiber
@@ -24,31 +30,12 @@ func StartGateway() {
 	//	return c.Next()
 	//})
 
-	// User - определяем обработчик для эндпойнта /user - для примера
+	app.Get("/", Alive)
+
+	// User service
 	app.Use("/user/*", UserAction())
 
-	// Account
-	app.Use("/account", proxy.Balancer(proxy.Config{
-		Servers: []string{
-			// Получаем URL удаленного сервера, к которому будем проксировать запрос
-			"http://localhost:9091",
-		},
-		ModifyResponse: func(c *fiber.Ctx) error {
-			return nil
-		},
-	}))
-
-	// Transactions
-	app.Use("/transaction", proxy.Balancer(proxy.Config{
-		Servers: []string{
-			// Получаем URL удаленного сервера, к которому будем проксировать запрос
-			"http://localhost:9092",
-		},
-		ModifyResponse: func(c *fiber.Ctx) error {
-			return nil
-		},
-	}))
-
+	// Запуск сервера шлюза
 	go func() {
 		if err := app.Listen(":9080"); err != nil {
 			fmt.Printf("Error starting server: %s\n", err)

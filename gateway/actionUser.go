@@ -9,12 +9,12 @@ import (
 
 func UserAction() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-
 		err := proxy.Balancer(proxy.Config{
 			Servers: []string{
 				// Получаем URL удаленного сервера, к которому будем проксировать запрос
 				"http://localhost:9090",
 			},
+			// Тут какая разница - мы вызываем конкретный путь users - зачем резать путь
 			ModifyRequest: func(c *fiber.Ctx) error {
 				c.Request().URI().SetPath(strings.TrimPrefix(string(c.Request().URI().Path()), "/user"))
 				return nil
