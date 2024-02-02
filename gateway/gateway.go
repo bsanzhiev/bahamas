@@ -4,6 +4,7 @@ package gateway
 
 import (
 	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/proxy"
 )
@@ -24,22 +25,7 @@ func StartGateway() {
 	//})
 
 	// User - определяем обработчик для эндпойнта /user - для примера
-	app.Use("/user/*", proxy.Balancer(proxy.Config{
-		Servers: []string{
-			// Получаем URL удаленного сервера, к которому будем проксировать запрос
-			"http://localhost:9090",
-		},
-		ModifyResponse: func(c *fiber.Ctx) error {
-			// Есть ли тело ответа от удаленного сервиса
-			// Ставим заглушку
-			//if c.Response().Body() != nil && len(c.Response().Body()) > 0 {
-			//	responseData := string(c.Response().Body()) + "User Data"
-			//	return c.SendString(responseData)
-			//} else {
-			return c.SendString("User data")
-			//}
-		},
-	}))
+	app.Use("/user/*", UserAction())
 
 	// Account
 	app.Use("/account", proxy.Balancer(proxy.Config{
