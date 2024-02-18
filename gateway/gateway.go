@@ -20,15 +20,15 @@ func StartGateway() {
 	app := fiber.New()
 
 	// Middleware for check auth token
-	//app.Use(func(c *fiber.Ctx) error {
-	//	token := c.Get("Authorization")
-	//
-	//	if token == "" {
-	//		return c.Redirect("/login")
-	//	}
-	//
-	//	return c.Next()
-	//})
+	// app.Use(func(c *fiber.Ctx) error {
+	// 	token := c.Get("Authorization")
+
+	// 	if token == "" {
+	// 		c.Status(401).JSON(fiber.Map{"error": "No valid token"})
+	// 		return c.Redirect("/login")
+	// 	}
+	// 	return c.Next()
+	// })
 
 	app.Get("/", Alive)
 

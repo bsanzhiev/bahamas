@@ -24,7 +24,7 @@ func UserAction() fiber.Handler {
 				if c.Response().StatusCode() >= 400 {
 					responseData = "User Service: Error - " + string(c.Response().Header.StatusMessage())
 				} else if c.Response().Body() != nil && len(c.Response().Body()) > 0 {
-					responseData = "User Service: " + string(c.Response().Body())
+					responseData = "User Service - Users: " + string(c.Response().Body())
 				} else {
 					responseData = "User Service: No data"
 				}
