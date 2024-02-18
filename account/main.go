@@ -6,14 +6,19 @@ import (
 	"log"
 	"time"
 
+	"github.com/bsanzhiev/bahamas/account/controllers"
 	"github.com/bsanzhiev/bahamas/account/migrations"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
 	app := fiber.New()
+	app.Use(cors.New(cors.Config{
+		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
+	}))
 
 	app.Get("/alive", Alive)
 
@@ -58,6 +63,15 @@ func main() {
 	// Здесь будет группа роутов
 	// 1 - Счета - группа - список счетов, создание счета, изменение счета, удаление
 	// 2 - Транзакции - группа - тоже самое
+	api := app.Group("/api")
+	v1 := api.Group("/v1")
+	v1.Get("/accounts", func(c *fiber.Ctx) error {
+		return c.SendString("Return all accounts v1")
+	})
+	controllers.AccountController(v1)
+	v1.Get("/transactions", func(c *fiber.Ctx) error {
+		return c.SendString("Return all transactions v1")
+	})
 
 	// Старт сервиса
 	if err := app.Listen(":9091"); err != nil {
