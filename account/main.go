@@ -16,7 +16,7 @@ func Alive(c *fiber.Ctx) error {
 func main() {
 	app := fiber.New()
 
-	app.Get("/", Alive)
+	app.Get("/alive", Alive)
 
 	if err := app.Listen(":9091"); err != nil {
 		fmt.Printf("Error starting User server: %s\n", err)
