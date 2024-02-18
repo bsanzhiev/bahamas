@@ -72,6 +72,7 @@ func main() {
 	v1.Get("/transactions", func(c *fiber.Ctx) error {
 		return c.SendString("Return all transactions v1")
 	})
+	controllers.TransactionController(v1)
 
 	// Старт сервиса
 	if err := app.Listen(":9091"); err != nil {

@@ -7,8 +7,8 @@ import (
 func AccountController(app fiber.Router) {
 	accounts := app.Group("/accounts")
 	accounts.Get("/list", getAccounts)
-	accounts.Post("/create", createAccount)
 	accounts.Get("/get/:id", getAccount)
+	accounts.Post("/create", createAccount)
 	accounts.Put("/update/:id", updateAccount)
 	accounts.Delete("/delete/:id", deleteAccount)
 }
