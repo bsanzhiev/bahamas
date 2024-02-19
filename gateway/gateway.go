@@ -8,13 +8,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func Alive(c *fiber.Ctx) error {
-	defer func() {
-		c.JSON(fiber.Map{"alive": true, "ready": true})
-	}()
-	return nil
-}
-
 func StartGateway() {
 	// Создаем новый экземпляр Fiber
 	app := fiber.New()
@@ -33,7 +26,7 @@ func StartGateway() {
 	app.Get("/", Alive)
 
 	// User service
-	app.Use("/user/*", UserAction())
+	app.Use("/users/*", UserAction())
 
 	// Запуск сервера шлюза
 	go func() {
@@ -42,4 +35,11 @@ func StartGateway() {
 		}
 	}()
 	select {}
+}
+
+func Alive(c *fiber.Ctx) error {
+	defer func() {
+		c.JSON(fiber.Map{"alive": true, "ready": true, "service": "gateway"})
+	}()
+	return nil
 }
