@@ -42,7 +42,7 @@ func NewMigrator(ctx context.Context, dbPool *pgxpool.Pool) (*Migrator, error) {
 	}
 	// scripts, _ := fs.Sub(migrationsFS, "scripts")
 
-	//
+	// Делаем миграцию в базу данных
 	if errMigration := migrator.LoadMigrations(scripts); errMigration != nil {
 		return nil, fmt.Errorf("failed to load migrations: %v", errMigration)
 	}

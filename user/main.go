@@ -17,7 +17,7 @@ func main() {
 
 	app := fiber.New()
 
-	// Create Pool
+	// Создаем пул подключений к базе данных
 	dbPool, errPool := pgxpool.New(ctx, urlDB)
 	if errPool != nil {
 		log.Fatalf("Failed to create pool: %v", errPool)
