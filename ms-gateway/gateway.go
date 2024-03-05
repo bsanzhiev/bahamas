@@ -1,7 +1,5 @@
 package gateway
 
-// TODO - переписать без использования fasthttp
-
 import (
 	"fmt"
 

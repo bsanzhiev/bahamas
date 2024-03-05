@@ -17,7 +17,10 @@ func main() {
 	ctx := context.Background()
 
 	// Получаем строку подключения
-	godotenv.Load()
+	errEnv := godotenv.Load()
+	if errEnv != nil {
+		log.Fatal("Error loading .env file")
+	}
 	connString := os.Getenv("CONNECTION_STRING")
 
 	// urlDB := "postgres://postgres:pass123@localhost:9010/bahamas_users"
