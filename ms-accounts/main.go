@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
-	"github.com/bsanzhiev/bahamas/account/controllers"
-	"github.com/bsanzhiev/bahamas/account/migrations"
+	"github.com/bsanzhiev/bahamas/ms-accounts/controllers"
+	"github.com/bsanzhiev/bahamas/ms-accounts/migrations"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -22,9 +24,14 @@ func main() {
 
 	app.Get("/alive", Alive)
 
+	// Получаем строку подключения
+	godotenv.Load()
+	connString := os.Getenv("CONNECTION_STRING")
+
 	// Создаем пул подключений к базе данных =============================
 	ctx := context.Background()
-	urlDB := "postgres://postgres:pass123@localhost:9011/bahamas_accounts"
+	// urlDB := "postgres://postgres:pass123@localhost:9011/bahamas_accounts"
+	urlDB := connString
 
 	dbPool, errPool := pgxpool.New(ctx, urlDB)
 	if errPool != nil {
@@ -63,16 +70,16 @@ func main() {
 	// Здесь будет группа роутов
 	// 1 - Счета - группа - список счетов, создание счета, изменение счета, удаление
 	// 2 - Транзакции - группа - тоже самое
-	api := app.Group("/api")
-	v1 := api.Group("/v1")
-	v1.Get("/accounts", func(c *fiber.Ctx) error {
+	api := app.Group("/api/v1")
+	// v1 := api.Group("/v1")
+	api.Get("/accounts", func(c *fiber.Ctx) error {
 		return c.SendString("Return all accounts v1")
 	})
-	controllers.AccountController(v1)
-	v1.Get("/transactions", func(c *fiber.Ctx) error {
+	controllers.AccountController(api)
+	api.Get("/transactions", func(c *fiber.Ctx) error {
 		return c.SendString("Return all transactions v1")
 	})
-	controllers.TransactionController(v1)
+	controllers.TransactionController(api)
 
 	// Старт сервиса
 	if err := app.Listen(":9091"); err != nil {

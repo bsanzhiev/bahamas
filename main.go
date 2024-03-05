@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/bsanzhiev/bahamas/gateway"
+	gateway "github.com/bsanzhiev/bahamas/ms-gateway"
 )
 
 func main() {

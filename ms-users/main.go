@@ -4,16 +4,24 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
-	"github.com/bsanzhiev/bahamas/user/controllers"
-	"github.com/bsanzhiev/bahamas/user/migrations"
+	"github.com/bsanzhiev/bahamas/ms-users/controllers"
+	"github.com/bsanzhiev/bahamas/ms-users/migrations"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	ctx := context.Background()
-	urlDB := "postgres://postgres:pass123@localhost:9010/bahamas_users"
+
+	// Получаем строку подключения
+	godotenv.Load()
+	connString := os.Getenv("CONNECTION_STRING")
+
+	// urlDB := "postgres://postgres:pass123@localhost:9010/bahamas_users"
+	urlDB := connString
 
 	app := fiber.New()
 
@@ -59,12 +67,12 @@ func main() {
 		DBPool: dbPool,
 		Ctx:    ctx,
 	}
-	api := app.Group("/api")
-	v1 := api.Group("/v1")
-	v1.Get("/users", func(c *fiber.Ctx) error {
+	api := app.Group("/api/v1")
+	// v1 := api.Group("/v1")
+	api.Get("/users", func(c *fiber.Ctx) error {
 		return c.SendString("Return all accounts v1")
 	})
-	controllers.RegisterUserRoutes(v1, userController)
+	controllers.RegisterUserRoutes(api, userController)
 
 	if err := app.Listen(":9090"); err != nil {
 		fmt.Printf("Error starting User server: %s\n", err)
