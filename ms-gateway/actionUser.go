@@ -10,7 +10,6 @@ import (
 func UserAction() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// TODO: возвращаем этот код обратно, будет принимать параметры из тела внешнего запроса к шлюзу
-		// TODO: наборы для внутренних запросов будет хранить в карте имя: карта
 		err := proxy.Balancer(proxy.Config{
 			Servers: []string{
 				// Получаем URL удаленного сервера, к которому будем проксировать запрос
