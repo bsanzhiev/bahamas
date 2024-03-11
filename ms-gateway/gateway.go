@@ -71,7 +71,7 @@ func Alive(c *fiber.Ctx) error {
 // Тип для запросов
 type RequestData struct {
 	Service string                 `json:"service"`
-	Doing   string                 `json:"doing"`
+	Action  string                 `json:"action"`
 	Data    map[string]interface{} `json:"data"`
 }
 
@@ -92,11 +92,11 @@ func HandleRequest(c *fiber.Ctx) error {
 }
 
 func SomeWork(data *RequestData) error {
-	runes := []rune(data.Doing)
+	runes := []rune(data.Action)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
 		runes[i], runes[j] = runes[j], runes[i]
 	}
-	data.Doing = string(runes)
+	data.Action = string(runes)
 	return nil
 }
 
@@ -134,6 +134,6 @@ func SendToKafka(data *RequestData) error {
 	if err != nil {
 		return nil
 	}
-	log.Printf("Message is stored in topic(%s)/partition(%d)/offset(%d)\n, users_requests", partition, offset)
+	log.Printf("Message is stored in topic(%s)/partition(%d)/offset(%d)\n", "users_requests", partition, offset)
 	return nil
 }
