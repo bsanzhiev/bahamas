@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/IBM/sarama"
 	"github.com/gofiber/fiber/v2"
@@ -77,10 +76,21 @@ type RequestData struct {
 
 // Обработка входящих запросов
 func HandleRequest(c *fiber.Ctx) error {
-	var data RequestData
+	data := RequestData{
+		Service: "users",
+		Action:  "getUsers",
+		Data:    map[string]interface{}{"id": "1"},
+	}
+	log.Printf("Request: %v\n", data)
 
 	if err := c.BodyParser(&data); err != nil {
 		return err
+	}
+
+	// Отправляем сообщения в топик
+	errSend := SendToKafka(&data)
+	if errSend != nil {
+		return c.Status(500).SendString(errSend.Error())
 	}
 
 	err := SomeWork(&data)
@@ -91,6 +101,7 @@ func HandleRequest(c *fiber.Ctx) error {
 	return c.JSON(data)
 }
 
+// Мок функция
 func SomeWork(data *RequestData) error {
 	runes := []rune(data.Action)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
@@ -100,18 +111,20 @@ func SomeWork(data *RequestData) error {
 	return nil
 }
 
+// Отправка запроса в Kafka
 func SendToKafka(data *RequestData) error {
 	config := sarama.NewConfig()
+	config.Version = sarama.V2_8_0_0
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	config.Producer.Retry.Max = 5
 	config.Producer.Return.Successes = true
-	config.Version = sarama.V2_1_0_0
+	// config.Producer.Return.Errors = true
+	// config.Consumer.Return.Errors = true
 
-	brokers := []string{"localhost:9100"}
+	brokers := []string{"localhost:9092"}
 	producer, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
 		log.Fatalln("Fail to start Sarama producer:", err)
-		os.Exit(1)
 	}
 
 	defer func() {
