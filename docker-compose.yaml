@@ -40,6 +40,8 @@ services:
       dockerfile: ./ms-users/Dockerfile
     ports:
       - "9090:9090"
+    env_file:
+      - ./ms-users/.env
     networks:
       - bahamas-network
     restart: always
@@ -51,9 +53,11 @@ services:
       dockerfile: ./ms-accounts/Dockerfile
     ports:
       - "9091:9091"
-    restart: always
+    env_file:
+      - ./ms-accounts/.env
     networks:
       - bahamas-network
+    restart: always
 
 networks:
   bahamas-network:

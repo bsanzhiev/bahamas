@@ -19,7 +19,7 @@ func main() {
 	// Получаем строку подключения
 	errEnv := godotenv.Load()
 	if errEnv != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatalf("Error loading .env file: %v", errEnv)
 	}
 	connString := os.Getenv("CONNECTION_STRING")
 

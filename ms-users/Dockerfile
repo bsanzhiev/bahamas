@@ -15,6 +15,9 @@ RUN go mod download
 # Копирование исходного кода из текущей директории в рабочую директорию внутри контейнера
 COPY ./ms-users/ .
 
+#  Copy env files
+COPY ./ms-users/.env .env
+
 # Компиляция приложения
 RUN go build -o main .
 
@@ -26,6 +29,9 @@ WORKDIR /app
 
 #  Копирование исходного кода из текущей стадии в рабочую директорию внутри контейнера
 COPY --from=builder /src/main /app/
+
+#  Copying env files
+COPY --from=builder /src/.env .env
 
 # Запуск бинарного файла
 CMD ["./main"]
