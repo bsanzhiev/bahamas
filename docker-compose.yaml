@@ -1,0 +1,70 @@
+version: "3"
+services:
+  zookeeper:
+    image: "confluentinc/cp-zookeeper:latest"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - bahamas-network
+
+  kafka:
+    image: "confluentinc/cp-kafka:latest"
+    depends_on:
+      - zookeeper
+    env_file:
+      - ./broker/broker1.env
+    ports:
+      - "9092:9202"
+    networks:
+      - bahamas-network
+
+  ms-gateway:
+    # build: ./ms-gateway
+    build:
+      context: .
+      dockerfile: ./ms-gateway/Dockerfile
+    ports:
+      - "9080:9080"
+    depends_on:
+      - kafka
+    networks:
+      - bahamas-network
+    restart: always
+    # volumes:
+    #   - .:/code
+
+  ms-users:
+    # build: ./ms-users
+    build:
+      context: .
+      dockerfile: ./ms-users/Dockerfile
+    ports:
+      - "9090:9090"
+    networks:
+      - bahamas-network
+    restart: always
+
+  ms-accounts:
+    # build: ./ms-accounts
+    build:
+      context: .
+      dockerfile: ./ms-accounts/Dockerfile
+    ports:
+      - "9091:9091"
+    restart: always
+    networks:
+      - bahamas-network
+
+networks:
+  bahamas-network:
+
+  # db:
+  #   image: postgres:latest
+  #   environment:
+  #     POSTGRES_PASSWORD: example
+  #   volumes:
+  #     - ./db:/var/lib/postgresql/data
+  #     - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   ports:
+  #     - "5432:5432"
+  #   restart: always

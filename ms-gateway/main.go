@@ -1,4 +1,4 @@
-package gateway
+package main
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func StartGateway() {
+func main() {
 	// Создаем новый экземпляр Fiber
 	app := fiber.New()
 

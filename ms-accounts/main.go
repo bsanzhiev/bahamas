@@ -33,6 +33,7 @@ func main() {
 	// urlDB := "postgres://postgres:pass123@localhost:9011/bahamas_accounts"
 	urlDB := connString
 
+	fmt.Println(connString)
 	dbPool, errPool := pgxpool.New(ctx, urlDB)
 	if errPool != nil {
 		log.Fatalf("Failed to create pool: %v", errPool)
