@@ -19,7 +19,6 @@ services:
       - bahamas-network
 
   ms-gateway:
-    # build: ./ms-gateway
     build:
       context: .
       dockerfile: ./ms-gateway/Dockerfile
@@ -34,7 +33,6 @@ services:
     #   - .:/code
 
   ms-users:
-    # build: ./ms-users
     build:
       context: .
       dockerfile: ./ms-users/Dockerfile
@@ -47,7 +45,6 @@ services:
     restart: always
 
   ms-accounts:
-    # build: ./ms-accounts
     build:
       context: .
       dockerfile: ./ms-accounts/Dockerfile
