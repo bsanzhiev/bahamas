@@ -14,7 +14,7 @@ services:
     env_file:
       - ./broker/broker1.env
     ports:
-      - "9092:9202"
+      - "9092:9092"
     networks:
       - bahamas-network
 

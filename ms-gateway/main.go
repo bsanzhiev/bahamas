@@ -93,28 +93,13 @@ func HandleRequest(c *fiber.Ctx) error {
 		return c.Status(500).SendString(errSend.Error())
 	}
 
-	err := SomeWork(&data)
-	if err != nil {
-		return c.Status(500).SendString(err.Error())
-	}
-
 	return c.JSON(data)
-}
-
-// Мок функция
-func SomeWork(data *RequestData) error {
-	runes := []rune(data.Action)
-	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
-		runes[i], runes[j] = runes[j], runes[i]
-	}
-	data.Action = string(runes)
-	return nil
 }
 
 // Отправка запроса в Kafka
 func SendToKafka(data *RequestData) error {
 	config := sarama.NewConfig()
-	config.Version = sarama.V2_8_0_0
+	config.Version = sarama.V2_1_0_0
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	config.Producer.Retry.Max = 5
 	config.Producer.Return.Successes = true

@@ -27,5 +27,8 @@ WORKDIR /app
 #  Копирование исходного кода из текущей стадии в рабочую директорию внутри контейнера
 COPY --from=builder /src/main /app/
 
+#  Copying env files
+COPY --from=builder /src/.env .env
+
 # Запуск бинарного файла
 CMD ["./main"]
