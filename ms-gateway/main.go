@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/gofiber/fiber/v2"
@@ -13,7 +14,7 @@ func main() {
 	// Создаем новый экземпляр Fiber
 	app := fiber.New()
 
-	// Сервис запущен
+	// Проверка состояния работы сервиса
 	app.Get("/alive", Alive)
 
 	// Проверка аутентификации
@@ -28,27 +29,11 @@ func main() {
 	// 	return c.Next()
 	// })
 
-	// Что приходит в запросе:
-	// - Имя сервиса
-	// - Имя операции
-	// - Объект запроса
-
 	// Разбираем полученный запрос
 	// Узнаем имя сервиса - сопоставляем с адресами конкретного сервиса
-	// Отправляем данные запроса дальше
-
-	// имена сервисов лежат в карте - сопостовляем с топиками
-	// Используем Кафку
-	// Кидаем в нужный топик пришедшие данные
-	// Получаем данные из топика
-	// Отправляем обратно клиенту ответ
-	// Как получить данные обратно?
-	// Для отправки и получения сообщений используем разные топики
+	// Кидаем в нужный топик пришедшие данные по имени
 
 	app.Post("/", HandleRequest)
-
-	// User service
-	// app.Use("/users/*", UserAction())
 
 	// Запуск шлюза
 	go func() {
@@ -69,42 +54,65 @@ func Alive(c *fiber.Ctx) error {
 
 // Тип для запросов
 type RequestData struct {
-	Service string                 `json:"service"`
-	Action  string                 `json:"action"`
-	Data    map[string]interface{} `json:"data"`
+	Service string                 `json:"service"` // Имя сервиса
+	Action  string                 `json:"action"`  // Имя операции
+	Data    map[string]interface{} `json:"data"`    // Объект запроса
+}
+
+// Тип для ответов
+type ResponseData struct {
+	Status  int         `json:"status"`  // Код ответа
+	Message string      `json:"message"` // Сообщение об ошибке или результате
+	Data    interface{} `json:"data"`    // Объект ответа
 }
 
 // Обработка входящих запросов
 func HandleRequest(c *fiber.Ctx) error {
-	data := RequestData{
-		Service: "users",
-		Action:  "getUsers",
-		Data:    map[string]interface{}{"id": "1"},
-	}
-	log.Printf("Request: %v\n", data)
 
+	rawBody := c.Body()
+	log.Printf("Raw request body: %s\n", rawBody)
+
+	data := new(RequestData) // as pointer - new
 	if err := c.BodyParser(&data); err != nil {
 		return err
 	}
+	log.Printf("Request data from body: %v\n", data)
 
-	// Отправляем сообщения в топик
-	errSend := SendToKafka(&data)
+	// Получили данные из запроса успешно
+	// Определяем в какой топик отправить данные
+
+	// Отправляем сообщения в топик users_requests
+	errSend := SendToKafka(data)
 	if errSend != nil {
 		return c.Status(500).SendString(errSend.Error())
 	}
 
-	return c.JSON(data)
+	// Получаем ответы из топика users_responses и отправляем их обратно клиенту
+	response := ResponseData{}
+	errGet := GetFromKafka(&response, data)
+	if errGet != nil {
+		return c.Status(500).SendString(errGet.Error())
+	}
+
+	// Отправляем ответы клиенту
+	return c.JSON(response)
 }
 
 // Отправка запроса в Kafka
 func SendToKafka(data *RequestData) error {
+	// Здесь нужно определить в какой топик отправлять данные
+	topics := map[string]string{
+		"users":        "users_requests",
+		"accounts":     "accounts_requests",
+		"transactions": "transactions_requests",
+	}
+	topic := topics[data.Service]
+
 	config := sarama.NewConfig()
 	config.Version = sarama.V2_1_0_0
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	config.Producer.Retry.Max = 5
 	config.Producer.Return.Successes = true
-	// config.Producer.Return.Errors = true
-	// config.Consumer.Return.Errors = true
 
 	brokers := []string{"localhost:9092"}
 	producer, err := sarama.NewSyncProducer(brokers, config)
@@ -124,7 +132,7 @@ func SendToKafka(data *RequestData) error {
 	}
 
 	msg := &sarama.ProducerMessage{
-		Topic: "users_requests",
+		Topic: topic,
 		Value: sarama.ByteEncoder(jsonData),
 	}
 
@@ -132,6 +140,56 @@ func SendToKafka(data *RequestData) error {
 	if err != nil {
 		return nil
 	}
-	log.Printf("Message is stored in topic(%s)/partition(%d)/offset(%d)\n", "users_requests", partition, offset)
+	log.Printf("Message is stored in topic(%s)/partition(%d)/offset(%d)\n", topic, partition, offset)
 	return nil
+}
+
+// Получение ответа из Kafka
+func GetFromKafka(response *ResponseData, data *RequestData) error {
+	topics := map[string]string{
+		"users":        "users_responses",
+		"accounts":     "accounts_responses",
+		"transactions": "transactions_responses",
+	}
+	topic := topics[data.Service]
+	// Consumer config
+	config := sarama.NewConfig()
+	config.Version = sarama.V2_1_0_0
+	config.Consumer.Return.Errors = true
+	// Broker config
+	brokers := []string{"localhost:9092"}
+	// Create a new consumer
+	consumer, err := sarama.NewConsumer(brokers, config)
+	if err != nil {
+		log.Fatalln("Fail to start Sarama consumer:", err)
+	}
+	defer func() {
+		if err := consumer.Close(); err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
+	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetOldest)
+	if err != nil {
+		return fmt.Errorf("fail to start Sarama partition consumer: %w", err)
+	}
+	defer func() {
+		if err := partitionConsumer.Close(); err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
+	for {
+		select {
+		case msg := <-partitionConsumer.Messages():
+			log.Printf("Message is received from topic(%s)/partition(%d)/offset(%d)\n", topic, msg.Partition, msg.Offset)
+			err = json.Unmarshal(msg.Value, response)
+			if err != nil {
+				return fmt.Errorf("fail to unmarshal message: %w", err)
+			}
+		case <-time.After(3 * time.Second): // Периодичность получения ответа
+			log.Println("Timeout")
+			return nil
+		}
+	}
 }

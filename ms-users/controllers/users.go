@@ -2,8 +2,12 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"log"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -24,6 +28,18 @@ type UserController struct {
 	Ctx    context.Context
 }
 
+type IncomingData struct {
+	Service string                 `json:"service"` // Имя сервиса
+	Action  string                 `json:"action"`  // Имя операции
+	Data    map[string]interface{} `json:"data"`    // Объект запроса
+}
+
+type OutgoingData struct {
+	Status  int         `json:"status"`  // Код ответа
+	Message string      `json:"message"` // Сообщение об ошибке или результате
+	Data    interface{} `json:"data"`    // Объект ответа
+}
+
 func RegisterUserRoutes(app fiber.Router, uc *UserController) {
 	users := app.Group("/users")
 	users.Get("/list", uc.GetUsers)
@@ -37,6 +53,13 @@ func (uc *UserController) GetUsers(c *fiber.Ctx) error {
 	// Определяем дополнительно контекст и пул соединений для читаемости
 	dbPool := uc.DBPool
 	ctx := uc.Ctx
+
+	// Получаем данные из Kafka
+	response := IncomingData{}
+	errGet := GetFromKafka(&response)
+	if errGet != nil {
+		return c.Status(500).SendString(errGet.Error())
+	}
 
 	// Делаем запрос
 	rows, errRows := dbPool.Query(ctx, "SELECT id, username, first_name, last_name, email FROM users")
@@ -58,8 +81,19 @@ func (uc *UserController) GetUsers(c *fiber.Ctx) error {
 		return err
 	}
 
+	data := OutgoingData{
+		Status:  500,
+		Message: "Success",
+		Data:    users,
+	}
+
+	errSend := SendToKafka(&data)
+	if errSend != nil {
+		return c.Status(500).SendString(errSend.Error())
+	}
+
 	// получить список пользователей и отправить в ответе
-	// return c.SendString("User Data\n")
+	// Отправить в топик users_response
 	return c.JSON(users)
 }
 
@@ -81,4 +115,86 @@ func updateUser(c *fiber.Ctx) error {
 func deleteUser(c *fiber.Ctx) error {
 	// delete logic here
 	return c.SendString("Delete user")
+}
+
+// Получение ответа из Kafka
+func GetFromKafka(response *IncomingData) error {
+	// Consumer config
+	config := sarama.NewConfig()
+	config.Version = sarama.V2_1_0_0
+	config.Consumer.Return.Errors = true
+	// Broker config
+	brokers := []string{"localhost:9092"}
+	// Create a new consumer
+	consumer, err := sarama.NewConsumer(brokers, config)
+	if err != nil {
+		log.Fatalln("Fail to start Sarama consumer:", err)
+	}
+	defer func() {
+		if err := consumer.Close(); err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
+	partitionConsumer, err := consumer.ConsumePartition("users_requests", 0, sarama.OffsetOldest)
+	if err != nil {
+		return fmt.Errorf("fail to start Sarama partition consumer: %w", err)
+	}
+	defer func() {
+		if err := partitionConsumer.Close(); err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
+	for {
+		select {
+		case msg := <-partitionConsumer.Messages():
+			log.Printf("Message is received from topic(%s)/partition(%d)/offset(%d)\n", "users_requests", msg.Partition, msg.Offset)
+			err = json.Unmarshal(msg.Value, response)
+			if err != nil {
+				return fmt.Errorf("fail to unmarshal message: %w", err)
+			}
+		case <-time.After(3 * time.Second): // Периодичность получения ответа
+			log.Println("Timeout")
+			return nil
+		}
+	}
+}
+
+// Отправка сообщения в Kafka
+func SendToKafka(data *OutgoingData) error {
+	config := sarama.NewConfig()
+	config.Version = sarama.V2_1_0_0
+	config.Producer.RequiredAcks = sarama.WaitForAll
+	config.Producer.Retry.Max = 5
+	config.Producer.Return.Successes = true
+
+	brokers := []string{"localhost:9092"}
+	producer, err := sarama.NewSyncProducer(brokers, config)
+	if err != nil {
+		log.Fatalln("Fail to start Sarama producer:", err)
+	}
+
+	defer func() {
+		if err := producer.Close(); err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	msg := &sarama.ProducerMessage{
+		Topic: "users_responses",
+		Value: sarama.ByteEncoder(jsonData),
+	}
+
+	partition, offset, err := producer.SendMessage(msg)
+	if err != nil {
+		return nil
+	}
+	log.Printf("Message is stored in topic(%s)/partition(%d)/offset(%d)\n", "users_responses", partition, offset)
+	return nil
 }

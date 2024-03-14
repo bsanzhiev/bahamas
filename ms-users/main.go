@@ -65,6 +65,9 @@ func main() {
 
 	app.Get("/alive", Alive)
 
+	// Получаем данные из топика
+	// Отправляем обратно клиенту ответ через кафку в отдельной теме ответов от юзера users_responses
+
 	// Группировка роутов
 	userController := &controllers.UserController{
 		DBPool: dbPool,
@@ -82,6 +85,7 @@ func main() {
 	}
 }
 
+// Проверка работоспособности сервера
 func Alive(c *fiber.Ctx) error {
 	defer func() {
 		c.JSON(fiber.Map{"alive": true, "ready": true})
