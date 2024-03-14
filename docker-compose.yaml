@@ -24,8 +24,6 @@ services:
       dockerfile: ./ms-gateway/Dockerfile
     ports:
       - "9080:9080"
-    depends_on:
-      - kafka
     networks:
       - bahamas-network
     restart: always
