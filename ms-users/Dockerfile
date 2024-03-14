@@ -15,9 +15,6 @@ RUN go mod download
 # Копирование исходного кода из текущей директории в рабочую директорию внутри контейнера
 COPY ./ms-users/ .
 
-#  Copy env files
-COPY ./ms-users/.env .env
-
 # Компиляция приложения
 RUN go build -o main .
 
