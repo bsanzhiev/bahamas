@@ -30,5 +30,8 @@ COPY --from=builder /src/main /app/
 #  Copying env files
 COPY --from=builder /src/.env .env
 
+# Копирование исходного кода из текущей директории в рабочую директорию внутри контейнера
+COPY ./ms-accounts/ .
+
 # Запуск бинарного файла
 CMD ["./main"]
