@@ -1,0 +1,21 @@
+### Gateway alive
+GET localhost:9080/alive
+Accept: application/json
+
+### Gateway basic
+POST http://localhost:9080/
+Content-Type: application/json
+
+{
+  "service": "users",
+  "action": "getUsers",
+  "data": {
+    "data": {
+      "id": 1
+    }
+  }
+}
+
+### Get all users in list
+GET http://localhost:9090/api/v1/users/list
+Content-Type: application/json

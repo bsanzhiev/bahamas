@@ -65,14 +65,16 @@ func main() {
 
 	app.Get("/alive", Alive)
 
-	// Получаем данные из топика
-	// Отправляем обратно клиенту ответ через кафку в отдельной теме ответов от юзера users_responses
+	//TODO: Code for getting data from Kafka consumer
 
-	// Группировка роутов
+	// Provide connection pool and context
 	userController := &controllers.UserController{
 		DBPool: dbPool,
 		Ctx:    ctx,
+		// we can put here data from kafka
 	}
+
+	// Grouping routes
 	api := app.Group("/api/v1")
 	// v1 := api.Group("/v1")
 	api.Get("/users", func(c *fiber.Ctx) error {
@@ -85,10 +87,13 @@ func main() {
 	}
 }
 
-// Проверка работоспособности сервера
+// Alive Readiness Check
 func Alive(c *fiber.Ctx) error {
 	defer func() {
-		c.JSON(fiber.Map{"alive": true, "ready": true})
+		err := c.JSON(fiber.Map{"alive": true, "ready": true, "service": "users"})
+		if err != nil {
+			return
+		}
 	}()
 	return nil
 }

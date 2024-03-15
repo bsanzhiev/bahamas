@@ -44,29 +44,32 @@ func main() {
 	select {}
 }
 
-// Проверка работы
+// Alive Проверка работы
 func Alive(c *fiber.Ctx) error {
 	defer func() {
-		c.JSON(fiber.Map{"alive": true, "ready": true, "service": "gateway"})
+		err := c.JSON(fiber.Map{"alive": true, "ready": true, "service": "gateway"})
+		if err != nil {
+			return
+		}
 	}()
 	return nil
 }
 
-// Тип для запросов
+// RequestData Тип для запросов
 type RequestData struct {
 	Service string                 `json:"service"` // Имя сервиса
 	Action  string                 `json:"action"`  // Имя операции
 	Data    map[string]interface{} `json:"data"`    // Объект запроса
 }
 
-// Тип для ответов
+// ResponseData Тип для ответов
 type ResponseData struct {
 	Status  int         `json:"status"`  // Код ответа
 	Message string      `json:"message"` // Сообщение об ошибке или результате
 	Data    interface{} `json:"data"`    // Объект ответа
 }
 
-// Обработка входящих запросов
+// HandleRequest Обработка входящих запросов
 func HandleRequest(c *fiber.Ctx) error {
 
 	rawBody := c.Body()
@@ -98,7 +101,7 @@ func HandleRequest(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-// Отправка запроса в Kafka
+// SendToKafka Отправка запроса в Kafka
 func SendToKafka(data *RequestData) error {
 	// Здесь нужно определить в какой топик отправлять данные
 	topics := map[string]string{
@@ -113,7 +116,7 @@ func SendToKafka(data *RequestData) error {
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	config.Producer.Retry.Max = 5
 	config.Producer.Return.Successes = true
-
+	//
 	brokers := []string{"localhost:9092"}
 	producer, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
@@ -144,7 +147,7 @@ func SendToKafka(data *RequestData) error {
 	return nil
 }
 
-// Получение ответа из Kafka
+// GetFromKafka Получение ответа из Kafka
 func GetFromKafka(response *ResponseData, data *RequestData) error {
 	topics := map[string]string{
 		"users":        "users_responses",
@@ -187,7 +190,7 @@ func GetFromKafka(response *ResponseData, data *RequestData) error {
 			if err != nil {
 				return fmt.Errorf("fail to unmarshal message: %w", err)
 			}
-		case <-time.After(3 * time.Second): // Периодичность получения ответа
+		case <-time.After(10 * time.Second): // Периодичность получения ответа
 			log.Println("Timeout")
 			return nil
 		}

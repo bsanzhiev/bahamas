@@ -90,7 +90,10 @@ func main() {
 
 func Alive(c *fiber.Ctx) error {
 	defer func() {
-		c.JSON(fiber.Map{"alive": true, "ready": true})
+		err := c.JSON(fiber.Map{"alive": true, "ready": true})
+		if err != nil {
+			return
+		}
 	}()
 	return nil
 }

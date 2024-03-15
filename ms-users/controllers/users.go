@@ -42,12 +42,14 @@ type OutgoingData struct {
 
 func RegisterUserRoutes(app fiber.Router, uc *UserController) {
 	users := app.Group("/users")
-	users.Get("/list", uc.GetUsers)
+	users.Get("/list", uc.GetUsers) // How to select this according action from data?
 	users.Get("/get/:id", getUser)
 	users.Post("/create", createUser)
 	users.Put("/update/:id", updateUser)
 	users.Delete("/delete/:id", deleteUser)
 }
+
+// How Kafka push to work this code?
 
 func (uc *UserController) GetUsers(c *fiber.Ctx) error {
 	// Определяем дополнительно контекст и пул соединений для читаемости
@@ -117,7 +119,7 @@ func deleteUser(c *fiber.Ctx) error {
 	return c.SendString("Delete user")
 }
 
-// Получение ответа из Kafka
+// GetFromKafka - Получение ответа из Kafka
 func GetFromKafka(response *IncomingData) error {
 	// Consumer config
 	config := sarama.NewConfig()
@@ -161,7 +163,7 @@ func GetFromKafka(response *IncomingData) error {
 	}
 }
 
-// Отправка сообщения в Kafka
+// SendToKafka - Отправка сообщения в Kafka
 func SendToKafka(data *OutgoingData) error {
 	config := sarama.NewConfig()
 	config.Version = sarama.V2_1_0_0
