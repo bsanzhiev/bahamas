@@ -29,15 +29,14 @@ func main() {
 	// 	return c.Next()
 	// })
 
-	// Разбираем полученный запрос
-	// Узнаем имя сервиса - сопоставляем с адресами конкретного сервиса
-	// Кидаем в нужный топик пришедшие данные по имени
+	// Разбираем полученный запрос;
+	// Узнаем имя сервиса - сопоставляем с адресами конкретного сервиса.
 
 	app.Post("/", HandleRequest)
 
 	// Запуск шлюза
 	go func() {
-		if err := app.Listen(":9080"); err != nil {
+		if err := app.Listen(":7001"); err != nil {
 			fmt.Printf("Error starting server: %s\n", err)
 		}
 	}()
@@ -75,35 +74,32 @@ func HandleRequest(c *fiber.Ctx) error {
 	rawBody := c.Body()
 	log.Printf("Raw request body: %s\n", rawBody)
 
-	data := new(RequestData) // as pointer - new
-	if err := c.BodyParser(&data); err != nil {
+	requestData := RequestData{}
+	if err := c.BodyParser(&requestData); err != nil {
 		return err
 	}
-	log.Printf("Request data from body: %v\n", data)
+	log.Printf("Request data from body: %v\n", requestData)
 
-	// Получили данные из запроса успешно
-	// Определяем в какой топик отправить данные
-
-	// Отправляем сообщения в топик users_requests
-	errSend := SendToKafka(data)
+	// Send data to users_requests topic
+	errSend := SendToKafka(&requestData)
 	if errSend != nil {
 		return c.Status(500).SendString(errSend.Error())
 	}
 
-	// Получаем ответы из топика users_responses и отправляем их обратно клиенту
-	response := ResponseData{}
-	errGet := GetFromKafka(&response, data)
+	// Get response data from topic
+	responseData := ResponseData{}
+	errGet := GetFromKafka(&requestData, &responseData)
 	if errGet != nil {
 		return c.Status(500).SendString(errGet.Error())
 	}
 
 	// Отправляем ответы клиенту
-	return c.JSON(response)
+	return c.JSON(responseData)
 }
 
 // SendToKafka Отправка запроса в Kafka
 func SendToKafka(data *RequestData) error {
-	// Здесь нужно определить в какой топик отправлять данные
+	// Define topic
 	topics := map[string]string{
 		"users":        "users_requests",
 		"accounts":     "accounts_requests",
@@ -116,8 +112,9 @@ func SendToKafka(data *RequestData) error {
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	config.Producer.Retry.Max = 5
 	config.Producer.Return.Successes = true
-	//
+
 	brokers := []string{"localhost:9092"}
+
 	producer, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
 		log.Fatalln("Fail to start Sarama producer:", err)
@@ -147,8 +144,8 @@ func SendToKafka(data *RequestData) error {
 	return nil
 }
 
-// GetFromKafka Получение ответа из Kafka
-func GetFromKafka(response *ResponseData, data *RequestData) error {
+// GetFromKafka Getting data from topic
+func GetFromKafka(data *RequestData, response *ResponseData) error {
 	topics := map[string]string{
 		"users":        "users_responses",
 		"accounts":     "accounts_responses",
@@ -190,6 +187,7 @@ func GetFromKafka(response *ResponseData, data *RequestData) error {
 			if err != nil {
 				return fmt.Errorf("fail to unmarshal message: %w", err)
 			}
+			log.Printf("Response data: %+v\n", *response) // Проверка данных, полученных из Kafka
 		case <-time.After(10 * time.Second): // Периодичность получения ответа
 			log.Println("Timeout")
 			return nil

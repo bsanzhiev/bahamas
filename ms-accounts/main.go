@@ -25,7 +25,11 @@ func main() {
 	app.Get("/alive", Alive)
 
 	// Получаем строку подключения
-	godotenv.Load()
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Cannot get env file.")
+		return
+	}
 	connString := os.Getenv("CONNECTION_STRING")
 
 	// Создаем пул подключений к базе данных =============================
@@ -33,7 +37,6 @@ func main() {
 	// urlDB := "postgres://postgres:pass123@localhost:9011/bahamas_accounts"
 	urlDB := connString
 
-	fmt.Println(connString)
 	dbPool, errPool := pgxpool.New(ctx, urlDB)
 	if errPool != nil {
 		log.Fatalf("Failed to create pool: %v", errPool)
@@ -70,7 +73,7 @@ func main() {
 
 	// Здесь будет группа роутов
 	// 1 - Счета - группа - список счетов, создание счета, изменение счета, удаление
-	// 2 - Транзакции - группа - тоже самое
+	// 2 - Транзакции - группа - то же самое
 	api := app.Group("/api/v1")
 	// v1 := api.Group("/v1")
 	api.Get("/accounts", func(c *fiber.Ctx) error {
@@ -83,7 +86,7 @@ func main() {
 	controllers.TransactionController(api)
 
 	// Старт сервиса
-	if err := app.Listen(":9091"); err != nil {
+	if err := app.Listen(":7003"); err != nil {
 		fmt.Printf("Error starting User server: %s\n", err)
 	}
 }

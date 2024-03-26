@@ -40,7 +40,7 @@ type OutgoingData struct {
 	Data    interface{} `json:"data"`    // Объект ответа
 }
 
-func RegisterUserRoutes(app fiber.Router, uc *UserController) {
+func (оооччч) RegisterUserRoutes(app fiber.Router, uc *UserController) {
 	users := app.Group("/users")
 	users.Get("/list", uc.GetUsers) // How to select this according action from data?
 	users.Get("/get/:id", getUser)
@@ -49,8 +49,7 @@ func RegisterUserRoutes(app fiber.Router, uc *UserController) {
 	users.Delete("/delete/:id", deleteUser)
 }
 
-// How Kafka push to work this code?
-
+// GetUsers How Kafka push to work this code?
 func (uc *UserController) GetUsers(c *fiber.Ctx) error {
 	// Определяем дополнительно контекст и пул соединений для читаемости
 	dbPool := uc.DBPool
@@ -62,6 +61,7 @@ func (uc *UserController) GetUsers(c *fiber.Ctx) error {
 	if errGet != nil {
 		return c.Status(500).SendString(errGet.Error())
 	}
+	fmt.Printf("response: %v", response)
 
 	// Делаем запрос
 	rows, errRows := dbPool.Query(ctx, "SELECT id, username, first_name, last_name, email FROM users")
@@ -84,7 +84,7 @@ func (uc *UserController) GetUsers(c *fiber.Ctx) error {
 	}
 
 	data := OutgoingData{
-		Status:  500,
+		Status:  200,
 		Message: "Success",
 		Data:    users,
 	}
@@ -94,8 +94,6 @@ func (uc *UserController) GetUsers(c *fiber.Ctx) error {
 		return c.Status(500).SendString(errSend.Error())
 	}
 
-	// получить список пользователей и отправить в ответе
-	// Отправить в топик users_response
 	return c.JSON(users)
 }
 
@@ -117,6 +115,23 @@ func updateUser(c *fiber.Ctx) error {
 func deleteUser(c *fiber.Ctx) error {
 	// delete logic here
 	return c.SendString("Delete user")
+}
+
+func StartKafkaConsumer() {
+	for {
+		response := IncomingData{}
+		errGet := GetFromKafka(&response)
+		if errGet != nil {
+			log.Printf("Error getting message from Kafka: %v", errGet)
+		}
+		fmt.Printf("response: %v", response)
+
+		userController := UserController{} // Предположим, у вас есть контроллер пользователей
+		err := userController.GetUsers(response)
+		if err != nil {
+			log.Printf("Error processing message: %v", err)
+		}
+	}
 }
 
 // GetFromKafka - Получение ответа из Kafka

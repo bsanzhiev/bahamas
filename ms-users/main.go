@@ -76,13 +76,12 @@ func main() {
 
 	// Grouping routes
 	api := app.Group("/api/v1")
-	// v1 := api.Group("/v1")
 	api.Get("/users", func(c *fiber.Ctx) error {
 		return c.SendString("Return all accounts v1")
 	})
 	controllers.RegisterUserRoutes(api, userController)
 
-	if err := app.Listen(":9090"); err != nil {
+	if err := app.Listen(":7002"); err != nil {
 		fmt.Printf("Error starting User server: %s\n", err)
 	}
 }

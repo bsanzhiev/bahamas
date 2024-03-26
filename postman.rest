@@ -1,21 +1,19 @@
 ### Gateway alive
-GET localhost:9080/alive
+GET localhost:7001/alive
 Accept: application/json
 
 ### Gateway basic
-POST http://localhost:9080/
+POST http://localhost:7001/
 Content-Type: application/json
 
 {
   "service": "users",
   "action": "getUsers",
   "data": {
-    "data": {
-      "id": 1
-    }
+    "id": 1
   }
 }
 
 ### Get all users in list
-GET http://localhost:9090/api/v1/users/list
+GET http://localhost:7002/api/v1/users/list
 Content-Type: application/json
