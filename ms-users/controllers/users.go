@@ -40,7 +40,7 @@ type OutgoingData struct {
 	Data    interface{} `json:"data"`    // Объект ответа
 }
 
-func (оооччч) RegisterUserRoutes(app fiber.Router, uc *UserController) {
+func RegisterUserRoutes(app fiber.Router, uc *UserController) {
 	users := app.Group("/users")
 	users.Get("/list", uc.GetUsers) // How to select this according action from data?
 	users.Get("/get/:id", getUser)
@@ -123,11 +123,14 @@ func StartKafkaConsumer() {
 		errGet := GetFromKafka(&response)
 		if errGet != nil {
 			log.Printf("Error getting message from Kafka: %v", errGet)
+			continue
 		}
 		fmt.Printf("response: %v", response)
 
-		userController := UserController{} // Предположим, у вас есть контроллер пользователей
-		err := userController.GetUsers(response)
+		userController := UserController{}
+
+		ctx := &fiber.Ctx{}
+		err := userController.GetUsers(ctx)
 		if err != nil {
 			log.Printf("Error processing message: %v", err)
 		}
