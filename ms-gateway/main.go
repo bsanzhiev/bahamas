@@ -12,7 +12,11 @@ import (
 
 func main() {
 	// Создаем новый экземпляр Fiber
-	app := fiber.New()
+	app := fiber.New(
+		fiber.Config{
+			AppName: "Bahama API Gateway",
+		},
+	)
 
 	// Проверка состояния работы сервиса
 	app.Get("/alive", Alive)
