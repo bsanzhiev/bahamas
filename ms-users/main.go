@@ -127,7 +127,7 @@ func main() {
 				log.Printf("Error: %v", err)
 			case msg := <-consumer.Messages():
 				// Process incoming messages
-				var requestData = gateway.RequestData{}
+				//var requestData
 				err := json.Unmarshal(msg.Value, &requestData)
 				if err != nil {
 					log.Printf("Failed to unmarshal message: %v", err)
@@ -150,7 +150,7 @@ func main() {
 				}
 
 				// Generate response
-				var responseData =
+				//var responseData
 				responseData.Status = 200
 				responseData.Message = "Success"
 				responseData.Data = "Response Data"
