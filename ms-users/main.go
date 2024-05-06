@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
+	"github.com/gofiber/fiber/v2"
+
+	"github.com/bsanzhiev/bahamas/ms-users/migrations"
 	"log"
 	"os"
 
 	"github.com/IBM/sarama"
 
-	gateway "github.com/bsanzhiev/bahamas/ms-gateway"
-	"github.com/bsanzhiev/bahamas/ms-users/migrations"
-	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
@@ -149,7 +150,7 @@ func main() {
 				}
 
 				// Generate response
-				var responseData = gateway.ResponseData{}
+				var responseData =
 				responseData.Status = 200
 				responseData.Message = "Success"
 				responseData.Data = "Response Data"

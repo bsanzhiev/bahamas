@@ -1,6 +1,6 @@
-module github.com/bsanzhiev/bahamas/gateway
+module github.com/bsanzhiev/bahamas/ms-gateway
 
-go 1.22.0
+go 1.22.2
 
 require (
 	github.com/IBM/sarama v1.43.2
