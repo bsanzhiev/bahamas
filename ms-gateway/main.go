@@ -10,11 +10,25 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// RequestData Тип для запросов
+type RequestData struct {
+	Service string                 `json:"service"` // Имя сервиса
+	Action  string                 `json:"action"`  // Имя операции
+	Data    map[string]interface{} `json:"data"`    // Объект запроса
+}
+
+// ResponseData Тип для ответов
+type ResponseData struct {
+	Status  int         `json:"status"`  // Код ответа
+	Message string      `json:"message"` // Сообщение об ошибке или результате
+	Data    interface{} `json:"data"`    // Объект ответа
+}
+
 func main() {
 	// Создаем новый экземпляр Fiber
 	app := fiber.New(
 		fiber.Config{
-			AppName: "Bahama API Gateway",
+			AppName: "Bahamas API Gateway",
 		},
 	)
 
@@ -58,23 +72,10 @@ func Alive(c *fiber.Ctx) error {
 	return nil
 }
 
-// RequestData Тип для запросов
-type RequestData struct {
-	Service string                 `json:"service"` // Имя сервиса
-	Action  string                 `json:"action"`  // Имя операции
-	Data    map[string]interface{} `json:"data"`    // Объект запроса
-}
-
-// ResponseData Тип для ответов
-type ResponseData struct {
-	Status  int         `json:"status"`  // Код ответа
-	Message string      `json:"message"` // Сообщение об ошибке или результате
-	Data    interface{} `json:"data"`    // Объект ответа
-}
-
 // HandleRequest Обработка входящих запросов
 func HandleRequest(c *fiber.Ctx) error {
 
+	// Analyse request data
 	rawBody := c.Body()
 	log.Printf("Raw request body: %s\n", rawBody)
 
