@@ -1,4 +1,4 @@
-package main
+package types
 
 // RequestData Тип для запросов
 type RequestData struct {
