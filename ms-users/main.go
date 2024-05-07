@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 
+	// gatewayTypes "github.com/bsanzhiev/bahamas/ms-gateway/types"
 	"github.com/bsanzhiev/bahamas/ms-users/migrations"
 	"github.com/gofiber/fiber/v2"
 

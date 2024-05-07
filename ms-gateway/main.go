@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
+	types "github.com/bsanzhiev/bahamas/ms-gateway/types"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -65,7 +66,7 @@ func HandleRequest(c *fiber.Ctx) error {
 	rawBody := c.Body()
 	log.Printf("Raw request body: %s\n", rawBody)
 
-	requestData := RequestData{}
+	requestData := types.RequestData{}
 	if err := c.BodyParser(&requestData); err != nil {
 		return err
 	}
@@ -78,7 +79,7 @@ func HandleRequest(c *fiber.Ctx) error {
 	}
 
 	// Get response data from topic
-	responseData := ResponseData{}
+	responseData := types.ResponseData{}
 	errGet := GetFromKafka(&requestData, &responseData)
 	if errGet != nil {
 		return c.Status(500).SendString(errGet.Error())
@@ -89,7 +90,7 @@ func HandleRequest(c *fiber.Ctx) error {
 }
 
 // SendToKafka Отправка запроса в Kafka
-func SendToKafka(data *RequestData) error {
+func SendToKafka(data *types.RequestData) error {
 	// Define topic
 	topics := map[string]string{
 		"users":        "users_requests",
@@ -136,7 +137,7 @@ func SendToKafka(data *RequestData) error {
 }
 
 // GetFromKafka Getting data from topic
-func GetFromKafka(data *RequestData, response *ResponseData) error {
+func GetFromKafka(data *types.RequestData, response *types.ResponseData) error {
 	topics := map[string]string{
 		"users":        "users_responses",
 		"accounts":     "accounts_responses",
