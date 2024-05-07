@@ -1,4 +1,4 @@
-package ms_gateway
+package main
 
 // RequestData Тип для запросов
 type RequestData struct {
