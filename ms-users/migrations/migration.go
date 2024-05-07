@@ -50,7 +50,7 @@ func NewMigrator(ctx context.Context, dbPool *pgxpool.Pool) (*Migrator, error) {
 	return &Migrator{migrator: migrator}, nil
 }
 
-// Миграция
+// Migrate Миграция
 func (m *Migrator) Migrate(ctx context.Context) error {
 	if err := m.migrator.Migrate(ctx); err != nil {
 		return fmt.Errorf("migration failed: %v", err)

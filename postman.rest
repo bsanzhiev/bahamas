@@ -6,7 +6,19 @@ Accept: application/json
 GET localhost:7002/alive
 Accept: application/json
 
-### Gateway basic
+### Get All Users
+POST http://localhost:7001/
+Content-Type: application/json
+
+{
+  "service": "users",
+  "action": "user_list",
+  "data": {
+    "id": 1
+  }
+}
+
+### Get user by id
 POST http://localhost:7001/
 Content-Type: application/json
 
@@ -17,7 +29,3 @@ Content-Type: application/json
     "id": 1
   }
 }
-
-### Get all users in list directly from users service
-GET http://localhost:7002/api/v1/users/list
-Content-Type: application/json

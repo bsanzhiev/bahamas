@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
+	"github.com/bsanzhiev/bahamas/ms-users/actions"
 	"log"
 	"os"
 
@@ -18,13 +18,48 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// TODO: 1. Remove HTTP Routes +
-// TODO: 2. Set Up Kafka Consumer
-// TODO: 3. Message Processing Logic
-// TODO: 4.Response Handling
-
 func main() {
 	ctx := context.Background()
+
+	// Получаем строку подключения
+	errEnv := godotenv.Load()
+	if errEnv != nil {
+		log.Fatalf("Error loading .env file: %v", errEnv)
+	}
+	urlDB := os.Getenv("CONNECTION_STRING")
+	// Создаем пул подключений к базе данных
+	DBPool, errPool := pgxpool.New(ctx, urlDB)
+	if errPool != nil {
+		log.Fatalf("Failed to create pool: %v", errPool)
+	}
+	defer DBPool.Close()
+	fmt.Println("Successfully connected to database!")
+
+	// Make migration
+	migrator, err := migrations.NewMigrator(ctx, DBPool)
+	if err != nil {
+		panic(err)
+	}
+
+	// Get the current migration status
+	now, exp, info, err := migrator.Info()
+	if err != nil {
+		panic(err)
+	}
+	if now < exp {
+		// migration is required, dump out the current state
+		// and perform the migration
+		println("migration needed, current state:")
+		println(info)
+
+		err = migrator.Migrate(ctx)
+		if err != nil {
+			panic(err)
+		}
+		println("migration successful!")
+	} else {
+		println("no database migration needed")
+	}
 
 	// Connect to Kafka brokers
 	brokers := []string{"localhost:9092"}
@@ -51,6 +86,7 @@ func main() {
 	}
 
 	// Create a new synchronous producer
+	// TODO: Pass producer to action
 	producer, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
 		log.Fatalf("Failed to start producer: %v", err)
@@ -86,36 +122,12 @@ func main() {
 				// Perform corresponding operations based on action
 				switch action {
 				case "user_list":
-					// handle get all users
-					fmt.Printf("Data: %v", data)
+					actions.UserList()
 				case "user_by_id":
 					// handle get user by id
 					fmt.Printf("User ID: %v", data)
 				default:
 					log.Printf("Unknown action: %v", action)
-				}
-
-				// Generate response
-				var responseData = gatewayTypes.ResponseData{}
-				responseData.Status = 200
-				responseData.Message = "Success"
-				responseData.Data = "Response Data"
-
-				// Send response to Kafka topic ('users_responses')
-				responseTopic := "users_responses"
-				responseJSON, err := json.Marshal(responseData)
-				if err != nil {
-					log.Printf("Failed to marshal response data: %v", err)
-					continue
-				}
-				producerMsg := sarama.ProducerMessage{
-					Topic: responseTopic,
-					Value: sarama.ByteEncoder(responseJSON),
-				}
-
-				if _, _, err := producer.SendMessage(&producerMsg); err != nil {
-					log.Printf("Failed to send response message: %v", err)
-					continue
 				}
 				//consumer.MarkMessage(msg, "")
 			}
@@ -123,47 +135,6 @@ func main() {
 	}()
 
 	// Main Users app =================================
-	// Получаем строку подключения
-	errEnv := godotenv.Load()
-	if errEnv != nil {
-		log.Fatalf("Error loading .env file: %v", errEnv)
-	}
-	urlDB := os.Getenv("CONNECTION_STRING")
-	// Создаем пул подключений к базе данных
-	dbPool, errPool := pgxpool.New(ctx, urlDB)
-	if errPool != nil {
-		log.Fatalf("Failed to create pool: %v", errPool)
-	}
-	defer dbPool.Close()
-
-	fmt.Println("Successfully connected to database!")
-
-	// Делаем миграцию
-	migrator, err := migrations.NewMigrator(ctx, dbPool)
-	if err != nil {
-		panic(err)
-	}
-
-	// get the current migration status
-	now, exp, info, err := migrator.Info()
-	if err != nil {
-		panic(err)
-	}
-	if now < exp {
-		// migration is required, dump out the current state
-		// and perform the migration
-		println("migration needed, current state:")
-		println(info)
-
-		err = migrator.Migrate(ctx)
-		if err != nil {
-			panic(err)
-		}
-		println("migration successful!")
-	} else {
-		println("no database migration needed")
-	}
-
 	app := fiber.New(
 		fiber.Config{
 			AppName: "Bahamas Users Service",
