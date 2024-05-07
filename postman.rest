@@ -12,7 +12,7 @@ Content-Type: application/json
 
 {
   "service": "users",
-  "action": "getUsers",
+  "action": "user_by_id",
   "data": {
     "id": 1
   }

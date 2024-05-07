@@ -28,30 +28,99 @@ func main() {
 
 	// Connect to Kafka brokers
 	brokers := []string{"localhost:9092"}
-	consumerGroup := "users_consumer_group"
+	//consumerGroup := "users_consumer_group"
+	//topics := []string{"users_requests"}
+	topics := "users_requests"
 
-	// Init Kafka consumer
+	// Initialize Kafka consumer
 	config := sarama.NewConfig()
 	config.Version = sarama.V2_1_0_0
-	config.Consumer.Group.Rebalance.GroupStrategies = sarama.NewBalanceStrategyRoundRobin()
+	config.Consumer.Return.Errors = true
+	config.Producer.Return.Successes = true
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
 
-	consumer, err := sarama.NewConsumerGroup(brokers, consumerGroup, config)
+	// Create a new consumer
+	consumer, err := sarama.NewConsumer(brokers, config)
 	if err != nil {
 		log.Fatalf("Failed to create consumer group: %v: ", err)
 	}
-	defer func(consumer sarama.ConsumerGroup) {
-		err := consumer.Close()
-		if err != nil {
 
-		}
-	}(consumer)
-
-	topics := []string{"users_requests"}
-	err = consumer.Consume(ctx, topics, nil)
+	partitionConsumer, err := consumer.ConsumePartition(topics, 0, sarama.OffsetNewest)
 	if err != nil {
-		log.Fatalf("Failed to subscribe to topics: %v", err)
+		log.Fatalf("Failed to get partition consumer: %v", err)
 	}
+
+	// Create a new synchronous producer
+	producer, err := sarama.NewSyncProducer(brokers, config)
+	if err != nil {
+		log.Fatalf("Failed to start producer: %v", err)
+	}
+
+	defer func() {
+		if err := partitionConsumer.Close(); err != nil {
+			log.Printf("Failed to close partition consumer: %v", err)
+		}
+		if err := consumer.Close(); err != nil {
+			log.Printf("Failed to close consumer: %v", err)
+		}
+	}()
+
+	go func() {
+		for {
+			select {
+			case err := <-partitionConsumer.Errors():
+				log.Printf("Error: %v", err)
+			case msg := <-partitionConsumer.Messages():
+				// Process incoming messages
+				var requestData = gatewayTypes.RequestData{}
+				err := json.Unmarshal(msg.Value, &requestData)
+				if err != nil {
+					log.Printf("Failed to unmarshal message: %v", err)
+					continue
+				}
+
+				// Extract action and request data
+				action := requestData.Action
+				data := requestData.Data
+
+				// Perform corresponding operations based on action
+				switch action {
+				case "user_list":
+					// handle get all users
+					fmt.Printf("Data: %v", data)
+				case "user_by_id":
+					// handle get user by id
+					fmt.Printf("User ID: %v", data)
+				default:
+					log.Printf("Unknown action: %v", action)
+				}
+
+				// Generate response
+				var responseData = gatewayTypes.ResponseData{}
+				responseData.Status = 200
+				responseData.Message = "Success"
+				responseData.Data = "Response Data"
+
+				// Send response to Kafka topic ('users_responses')
+				responseTopic := "users_responses"
+				responseJSON, err := json.Marshal(responseData)
+				if err != nil {
+					log.Printf("Failed to marshal response data: %v", err)
+					continue
+				}
+				producerMsg := sarama.ProducerMessage{
+					Topic: responseTopic,
+					Value: sarama.ByteEncoder(responseJSON),
+				}
+
+				if _, _, err := producer.SendMessage(&producerMsg); err != nil {
+					log.Printf("Failed to send response message: %v", err)
+					continue
+				}
+				//consumer.MarkMessage(msg, "")
+			}
+		}
+	}()
 
 	// Main Users app =================================
 	// Получаем строку подключения
@@ -120,56 +189,6 @@ func main() {
 		fmt.Printf("Error starting User server: %s\n", err)
 	}
 	// Main app =================================================
-
-	go func() {
-		for {
-			select {
-			case err := <-consumer.Errors():
-				log.Printf("Error: %v", err)
-			case msg := <-consumer.Messages():
-				// Process incoming messages
-				var requestData = gatewayTypes.RequestData{}
-				err := json.Unmarshal(msg.Value, &requestData)
-				if err != nil {
-					log.Printf("Failed to unmarshal message: %v", err)
-					continue
-				}
-
-				// Extract action and request data
-				action := requestData.Action
-				data := requestData.Data
-
-				// Perform corresponding operations based on action
-				switch action {
-				case "user_list":
-					// handle get all users
-					fmt.Printf("Data: %v", data)
-				case "user_by_id":
-					// handle get user by id
-				default:
-					log.Printf("Unknown action: %v", action)
-				}
-
-				// Generate response
-				var responseData = gatewayTypes.ResponseData{}
-				responseData.Status = 200
-				responseData.Message = "Success"
-				responseData.Data = "Response Data"
-
-				// Send response to Kafka topic ('users_responses')
-				responseTopic := "users_responses"
-				responseJSON, err := json.Marshal(responseData)
-				if err != nil {
-					log.Printf("Failed to marshal response data: %v", err)
-					continue
-				}
-				producerMsg := sarama.ProducerMessage{
-					Topic: responseTopic,
-					Value: sarama.ByteEncoder(responseJSON),
-				}
-			}
-		}
-	}()
 }
 
 // Alive Readiness Check
