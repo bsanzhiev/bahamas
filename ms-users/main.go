@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 
-	// gatewayTypes "github.com/bsanzhiev/bahamas/ms-gateway/types"
+	gatewayTypes "github.com/bsanzhiev/bahamas/ms-gateway/types"
 	"github.com/bsanzhiev/bahamas/ms-users/migrations"
 	"github.com/gofiber/fiber/v2"
 
@@ -128,7 +128,7 @@ func main() {
 				log.Printf("Error: %v", err)
 			case msg := <-consumer.Messages():
 				// Process incoming messages
-				var requestData = gateway.RequestData{}
+				var requestData = gatewayTypes.RequestData{}
 				err := json.Unmarshal(msg.Value, &requestData)
 				if err != nil {
 					log.Printf("Failed to unmarshal message: %v", err)
@@ -151,7 +151,7 @@ func main() {
 				}
 
 				// Generate response
-				var responseData = ResponseData
+				var responseData = gatewayTypes.ResponseData{}
 				responseData.Status = 200
 				responseData.Message = "Success"
 				responseData.Data = "Response Data"
