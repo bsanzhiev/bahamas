@@ -54,3 +54,19 @@ Content-Type: application/json
     "email": "dedhasan@lhvs.gr"
   }
 }
+
+### Update user
+POST http://localhost:7001/
+Content-Type: application/json
+
+{
+  "service": "users",
+  "action": "user_update",
+  "data": {
+    "id": 4,
+    "username": "yaponchik",
+    "first_name": "Vyacheslav",
+    "last_name": "Ivankov",
+    "email": "yaponchik@lhvs.gr"
+  }
+}

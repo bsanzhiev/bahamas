@@ -67,9 +67,24 @@ func (uc *UserController) UserCreate(userData types.UserRequestData) error {
 	return nil
 }
 
-func updateUser(c *fiber.Ctx) error {
+func (uc *UserController) UserUpdate(userID int, userData types.UserRequestData) error {
 	// update logic here
-	return c.SendString("Update user")
+	query := `
+	UPDATE users
+	SET username = COALESCE(NULLIF($1, ''), username),
+	    first_name = COALESCE(NULLIF($2, ''), first_name),
+	    last_name = COALESCE(NULLIF($3, ''), last_name),
+	    email = COALESCE(NULLIF($4, ''), email)
+	WHERE id = $5`
+
+	cmdTag, err := uc.DBPool.Exec(uc.Ctx, query, userData.Username, userData.FirstName, userData.LastName, userData.Email, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %v", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("no user found with id %d", userID)
+	}
+	return nil
 }
 
 func deleteUser(c *fiber.Ctx) error {
