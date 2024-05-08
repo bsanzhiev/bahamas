@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bsanzhiev/bahamas/ms-users/actions"
+	"github.com/bsanzhiev/bahamas/ms-users/controllers"
 	"log"
 	"os"
 
@@ -21,6 +22,7 @@ import (
 func main() {
 	ctx := context.Background()
 
+	// Database connection ===================================
 	// Получаем строку подключения
 	errEnv := godotenv.Load()
 	if errEnv != nil {
@@ -34,13 +36,13 @@ func main() {
 	}
 	defer DBPool.Close()
 	fmt.Println("Successfully connected to database!")
+	// Database connection =============================
 
-	// Make migration
+	// Migration =======================================
 	migrator, err := migrations.NewMigrator(ctx, DBPool)
 	if err != nil {
 		panic(err)
 	}
-
 	// Get the current migration status
 	now, exp, info, err := migrator.Info()
 	if err != nil {
@@ -60,7 +62,9 @@ func main() {
 	} else {
 		println("no database migration needed")
 	}
+	// Migration ===================================
 
+	// Kafka =======================================
 	// Connect to Kafka brokers
 	brokers := []string{"localhost:9092"}
 	//consumerGroup := "users_consumer_group"
@@ -79,7 +83,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create consumer group: %v: ", err)
 	}
-
 	partitionConsumer, err := consumer.ConsumePartition(topics, 0, sarama.OffsetNewest)
 	if err != nil {
 		log.Fatalf("Failed to get partition consumer: %v", err)
@@ -101,6 +104,12 @@ func main() {
 		}
 	}()
 
+	// Define user controller
+	var uc = controllers.UserController{
+		Ctx:    context.Background(),
+		DBPool: DBPool,
+	}
+
 	go func() {
 		for {
 			select {
@@ -120,19 +129,11 @@ func main() {
 				data := requestData.Data
 
 				// Perform corresponding operations based on action
-				switch action {
-				case "user_list":
-					actions.UserList()
-				case "user_by_id":
-					// handle get user by id
-					fmt.Printf("User ID: %v", data)
-				default:
-					log.Printf("Unknown action: %v", action)
-				}
-				//consumer.MarkMessage(msg, "")
+				actions.HandleAction(action, data, uc, producer)
 			}
 		}
 	}()
+	// Kafka ==========================================
 
 	// Main Users app =================================
 	app := fiber.New(

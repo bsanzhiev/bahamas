@@ -2,6 +2,9 @@ package controllers
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/jackc/pgx/v5"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -63,10 +66,25 @@ func (uc *UserController) GetUsers() ([]User, error) {
 	return users, nil
 }
 
-func (uc *UserController) getUser() (User, error) {
+func (uc *UserController) UserByID(data interface{}) (User, error) {
 	ctx := uc.Ctx
 	dbPool := uc.DBPool
+	var user User
+	var userID int
+	userID, ok := data.(int)
+	if !ok {
+		return User{}, fmt.Errorf("invalid ID format")
+	}
 
+	query := "SELECT id, username, first_name, last_name, email FROM users WHERE id=$1"
+	err := dbPool.QueryRow(ctx, query, userID).Scan(&user.ID, &user.Username, &user.FirstName, &user.LastName, &user.Email)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return User{}, fmt.Errorf("no user found with id %d", userID)
+		}
+		return User{}, err
+	}
+	return user, nil
 }
 
 func createUser(c *fiber.Ctx) error {

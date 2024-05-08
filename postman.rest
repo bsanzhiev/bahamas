@@ -13,12 +13,10 @@ Content-Type: application/json
 {
   "service": "users",
   "action": "user_list",
-  "data": {
-    "id": 1
-  }
+  "data": {}
 }
 
-### Get user by id
+### Get User by id
 POST http://localhost:7001/
 Content-Type: application/json
 
