@@ -21,8 +21,11 @@ func HandleAction(action string, data interface{}, uc controllers.UserController
 		UserCreate(data, uc, producer)
 	case "user_update":
 		UserUpdate(data, uc, producer)
+	case "user_delete":
+		UserDelete(data, uc, producer)
+
 	default:
-		DefaultAction(uc, producer)
+		DefaultAction(producer)
 		fmt.Println("Unknown action")
 	}
 }
@@ -128,7 +131,7 @@ func UserCreate(data interface{}, uc controllers.UserController, producer sarama
 		responseData.Status = 404
 		responseData.Message = fmt.Sprintf("Failed to create user: %v", err)
 		responseData.Data = ""
-		log.Printf("Failed to get user: %v", err)
+		log.Printf("Failed to create user: %v", err)
 	} else {
 		responseData.Status = 200
 		responseData.Message = "Success"
@@ -179,7 +182,7 @@ func UserUpdate(data interface{}, uc controllers.UserController, producer sarama
 		responseData.Status = 404
 		responseData.Message = fmt.Sprintf("Failed to create user: %v", err)
 		responseData.Data = ""
-		log.Printf("Failed to get user: %v", err)
+		log.Printf("Failed to update user: %v", err)
 	} else {
 		responseData.Status = 200
 		responseData.Message = "Success"
@@ -202,13 +205,64 @@ func UserUpdate(data interface{}, uc controllers.UserController, producer sarama
 	}
 }
 
-func DefaultAction(uc controllers.UserController, producer sarama.SyncProducer) {
+func DefaultAction(producer sarama.SyncProducer) {
 	// Generate response
 	var responseData = gatewayTypes.ResponseData{}
 	responseData.Status = 404
 	responseData.Message = "Unknown action"
 	responseData.Data = ""
 
+	// Send response to Kafka topic ('users_responses')
+	responseTopic := "users_responses"
+	responseJSON, err := json.Marshal(responseData)
+	if err != nil {
+		log.Printf("Failed to marshal response data: %v", err)
+		return
+	}
+	producerMsg := &sarama.ProducerMessage{
+		Topic: responseTopic,
+		Value: sarama.ByteEncoder(responseJSON),
+	}
+
+	if _, _, err := producer.SendMessage(producerMsg); err != nil {
+		log.Printf("Failed to send response message: %v", err)
+	}
+}
+
+func UserDelete(data interface{}, uc controllers.UserController, producer sarama.SyncProducer) {
+	// Get user ID =====================
+	var userData types.UserRequestData
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		log.Printf("Error marshaling data: %v", err)
+		return
+	}
+
+	err = json.Unmarshal(dataBytes, &userData)
+	if err != nil {
+		log.Printf("Error unmarshaling data to struct: %v", err)
+		return
+	}
+
+	userID := userData.ID
+	if userID == 0 {
+		log.Printf("Invalid or missing user ID")
+		return
+	}
+
+	// Generate response
+	var responseData = gatewayTypes.ResponseData{}
+	err = uc.UserDelete(userID)
+	if err != nil {
+		responseData.Status = 404
+		responseData.Message = fmt.Sprintf("Failed to delete user: %v", err)
+		responseData.Data = ""
+		log.Printf("Failed to delete user: %v", err)
+	} else {
+		responseData.Status = 200
+		responseData.Message = "Success"
+		responseData.Data = ""
+	}
 	// Send response to Kafka topic ('users_responses')
 	responseTopic := "users_responses"
 	responseJSON, err := json.Marshal(responseData)

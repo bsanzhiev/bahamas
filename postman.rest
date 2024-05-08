@@ -16,7 +16,7 @@ Content-Type: application/json
   "data": {}
 }
 
-### Get User by id
+### Get User by ID
 POST http://localhost:7001/
 Content-Type: application/json
 
@@ -28,7 +28,7 @@ Content-Type: application/json
   }
 }
 
-### Error wrong user ID
+### Error wrong User ID
 POST http://localhost:7001/
 Content-Type: application/json
 
@@ -40,7 +40,7 @@ Content-Type: application/json
   }
 }
 
-### Create user
+### Create User
 POST http://localhost:7001/
 Content-Type: application/json
 
@@ -68,5 +68,17 @@ Content-Type: application/json
     "first_name": "Vyacheslav",
     "last_name": "Ivankov",
     "email": "yaponchik@lhvs.gr"
+  }
+}
+
+### Delete User
+POST http://localhost:7001/
+Content-Type: application/json
+
+{
+  "service": "users",
+  "action": "user_delete",
+  "data": {
+    "id": 5
   }
 }

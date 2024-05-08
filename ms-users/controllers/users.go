@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bsanzhiev/bahamas/ms-users/types"
-	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -68,7 +67,6 @@ func (uc *UserController) UserCreate(userData types.UserRequestData) error {
 }
 
 func (uc *UserController) UserUpdate(userID int, userData types.UserRequestData) error {
-	// update logic here
 	query := `
 	UPDATE users
 	SET username = COALESCE(NULLIF($1, ''), username),
@@ -87,7 +85,16 @@ func (uc *UserController) UserUpdate(userID int, userData types.UserRequestData)
 	return nil
 }
 
-func deleteUser(c *fiber.Ctx) error {
-	// delete logic here
-	return c.SendString("Delete user")
+func (uc *UserController) UserDelete(userID int) error {
+	query := "DELETE FROM users WHERE id = $1"
+	cmdTag, err := uc.DBPool.Exec(uc.Ctx, query, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %v", err)
+	}
+
+	// Check if the deleting was successful
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("no user with id %d", userID)
+	}
+	return nil
 }
