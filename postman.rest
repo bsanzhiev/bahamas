@@ -24,6 +24,33 @@ Content-Type: application/json
   "service": "users",
   "action": "user_by_id",
   "data": {
-    "id": 1
+    "id": 4
+  }
+}
+
+### Error wrong user ID
+POST http://localhost:7001/
+Content-Type: application/json
+
+{
+  "service": "users",
+  "action": "user_by_id",
+  "data": {
+    "id": 100000
+  }
+}
+
+### Create user
+POST http://localhost:7001/
+Content-Type: application/json
+
+{
+  "service": "users",
+  "action": "user_create",
+  "data": {
+    "username": "dedhasan",
+    "first_name": "Aslan",
+    "last_name": "Usoyan",
+    "email": "dedhasan@lhvs.gr"
   }
 }

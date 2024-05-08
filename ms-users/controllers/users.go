@@ -4,43 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5"
-	"time"
-
+	"github.com/bsanzhiev/bahamas/ms-users/types"
 	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-type User struct {
-	ID        int       `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	DeletedAt time.Time `json:"deleted_at"`
-	Username  string    `json:"username"`
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	Email     string    `json:"email"`
-}
 
 type UserController struct {
 	DBPool *pgxpool.Pool
 	Ctx    context.Context
 }
 
-type IncomingData struct {
-	Service string                 `json:"service"` // Имя сервиса
-	Action  string                 `json:"action"`  // Имя операции
-	Data    map[string]interface{} `json:"data"`    // Объект запроса
-}
-
-type OutgoingData struct {
-	Status  int         `json:"status"`  // Код ответа
-	Message string      `json:"message"` // Сообщение об ошибке или результате
-	Data    interface{} `json:"data"`    // Объект ответа
-}
-
 // GetUsers How Kafka push to work this code?
-func (uc *UserController) GetUsers() ([]User, error) {
+func (uc *UserController) GetUsers() ([]types.User, error) {
 	ctx := uc.Ctx
 	dbPool := uc.DBPool
 	// Делаем запрос
@@ -50,9 +26,9 @@ func (uc *UserController) GetUsers() ([]User, error) {
 	}
 	defer rows.Close()
 
-	var users []User
+	var users []types.User
 	for rows.Next() {
-		var user User
+		var user types.User
 		if errUsers := rows.Scan(&user.ID, &user.Username, &user.FirstName, &user.LastName, &user.Email); errUsers != nil {
 			return nil, errUsers
 		}
@@ -66,30 +42,29 @@ func (uc *UserController) GetUsers() ([]User, error) {
 	return users, nil
 }
 
-func (uc *UserController) UserByID(data interface{}) (User, error) {
+func (uc *UserController) UserByID(userID int) (types.User, error) {
 	ctx := uc.Ctx
 	dbPool := uc.DBPool
-	var user User
-	var userID int
-	userID, ok := data.(int)
-	if !ok {
-		return User{}, fmt.Errorf("invalid ID format")
-	}
+	var user types.User
 
 	query := "SELECT id, username, first_name, last_name, email FROM users WHERE id=$1"
 	err := dbPool.QueryRow(ctx, query, userID).Scan(&user.ID, &user.Username, &user.FirstName, &user.LastName, &user.Email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return User{}, fmt.Errorf("no user found with id %d", userID)
+			return types.User{}, fmt.Errorf("no user found with id: %d", userID)
 		}
-		return User{}, err
+		return types.User{}, err
 	}
 	return user, nil
 }
 
-func createUser(c *fiber.Ctx) error {
-	// create logic here
-	return c.SendString("Create user")
+func (uc *UserController) UserCreate(userData types.UserRequestData) error {
+	query := "INSERT INTO users (username, first_name, last_name, email) VALUES ($1, $2, $3, $4)"
+	_, err := uc.DBPool.Exec(uc.Ctx, query, userData.Username, userData.FirstName, userData.LastName, userData.Email)
+	if err != nil {
+		return fmt.Errorf("failed to insert user: %v", err)
+	}
+	return nil
 }
 
 func updateUser(c *fiber.Ctx) error {

@@ -36,7 +36,6 @@ func main() {
 	}
 	defer DBPool.Close()
 	fmt.Println("Successfully connected to database!")
-	// Database connection =============================
 
 	// Migration =======================================
 	migrator, err := migrations.NewMigrator(ctx, DBPool)
@@ -62,7 +61,6 @@ func main() {
 	} else {
 		println("no database migration needed")
 	}
-	// Migration ===================================
 
 	// Kafka =======================================
 	// Connect to Kafka brokers
@@ -89,7 +87,6 @@ func main() {
 	}
 
 	// Create a new synchronous producer
-	// TODO: Pass producer to action
 	producer, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
 		log.Fatalf("Failed to start producer: %v", err)
@@ -133,7 +130,6 @@ func main() {
 			}
 		}
 	}()
-	// Kafka ==========================================
 
 	// Main Users app =================================
 	app := fiber.New(
