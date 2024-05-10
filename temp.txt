@@ -303,3 +303,17 @@ func SendToKafka(data *OutgoingData) error {
 	return nil
 }
 
+
+Users routing
+//Routing using REST API
+	//Provide connection pool and context
+	userController := &controllers.UserController{
+		DBPool: dbPool,
+		Ctx:    ctx,
+	}
+	//Grouping routes
+	api := app.Group("/api/v1")
+	api.Get("/users", func(c *fiber.Ctx) error {
+		return c.SendString("Return all accounts v1")
+	})
+	controllers.RegisterUserRoutes(api, userController)

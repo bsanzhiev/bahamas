@@ -3,28 +3,22 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/bsanzhiev/bahamas/ms-accounts/migrations"
 	"log"
 	"os"
 	"time"
 
-	"github.com/bsanzhiev/bahamas/ms-accounts/controllers"
-	"github.com/bsanzhiev/bahamas/ms-accounts/migrations"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	app := fiber.New()
-	app.Use(cors.New(cors.Config{
-		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
-	}))
+	ctx := context.Background()
 
-	app.Get("/alive", Alive)
-
-	// Получаем строку подключения
+	// Database connection ========================
+	// Get connection string from env file
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Cannot get env file.")
@@ -32,19 +26,16 @@ func main() {
 	}
 	connString := os.Getenv("CONNECTION_STRING")
 
-	// Создаем пул подключений к базе данных =============================
-	ctx := context.Background()
-	// urlDB := "postgres://postgres:pass123@localhost:9011/bahamas_accounts"
+	// Create connections pool
 	urlDB := connString
-
-	dbPool, errPool := pgxpool.New(ctx, urlDB)
-	if errPool != nil {
-		log.Fatalf("Failed to create pool: %v", errPool)
+	dbPool, err := pgxpool.New(ctx, urlDB)
+	if err != nil {
+		log.Fatalf("Failed to create pool: %v", err)
 	}
 	defer dbPool.Close()
 	fmt.Println("Successfully connected to Accounts database!")
 
-	// Делаем миграцию ========================================
+	// Migration =======================================
 	migrator, err := migrations.NewMigrator(ctx, dbPool)
 	if err != nil {
 		panic(err)
@@ -69,31 +60,26 @@ func main() {
 	} else {
 		println("no database migration needed")
 	}
-	// ======================================
 
-	// Здесь будет группа роутов
-	// 1 - Счета - группа - список счетов, создание счета, изменение счета, удаление
-	// 2 - Транзакции - группа - то же самое
-	api := app.Group("/api/v1")
-	// v1 := api.Group("/v1")
-	api.Get("/accounts", func(c *fiber.Ctx) error {
-		return c.SendString("Return all accounts v1")
-	})
-	controllers.AccountController(api)
-	api.Get("/transactions", func(c *fiber.Ctx) error {
-		return c.SendString("Return all transactions v1")
-	})
-	controllers.TransactionController(api)
+	// Logic for work with database and Kafka
+	// ...
 
-	// Старт сервиса
+	// Define Fiber app =======================
+	app := fiber.New(
+		fiber.Config{
+			AppName: "Bahamas Accounts Service",
+		})
+	// Check alive available
+	app.Get("/alive", Alive)
+	// Start app
 	if err := app.Listen(":7003"); err != nil {
-		fmt.Printf("Error starting User server: %s\n", err)
+		fmt.Printf("Error starting Account server: %s\n", err)
 	}
 }
 
 func Alive(c *fiber.Ctx) error {
 	defer func() {
-		err := c.JSON(fiber.Map{"alive": true, "ready": true})
+		err := c.JSON(fiber.Map{"alive": true, "ready": true, "service": "accounts"})
 		if err != nil {
 			return
 		}

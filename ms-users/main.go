@@ -23,7 +23,7 @@ func main() {
 	ctx := context.Background()
 
 	// Database connection ===================================
-	// Получаем строку подключения
+	// Get connection string from env file
 	errEnv := godotenv.Load()
 	if errEnv != nil {
 		log.Fatalf("Error loading .env file: %v", errEnv)
@@ -62,7 +62,7 @@ func main() {
 		println("no database migration needed")
 	}
 
-	// Kafka =======================================
+	// Kafka ================================
 	// Connect to Kafka brokers
 	brokers := []string{"localhost:9092"}
 	//consumerGroup := "users_consumer_group"
@@ -131,32 +131,16 @@ func main() {
 		}
 	}()
 
-	// Main Users app =================================
+	// Define Fiber app =================================
 	app := fiber.New(
 		fiber.Config{
 			AppName: "Bahamas Users Service",
 		},
 	)
-
 	app.Get("/alive", Alive)
-
-	// Routing using REST API
-	// Provide connection pool and context
-	//userController := &controllers.UserController{
-	//	DBPool: dbPool,
-	//	Ctx:    ctx,
-	//}
-	// Grouping routes
-	//api := app.Group("/api/v1")
-	//api.Get("/users", func(c *fiber.Ctx) error {
-	//	return c.SendString("Return all accounts v1")
-	//})
-	//controllers.RegisterUserRoutes(api, userController)
-
 	if err := app.Listen(":7002"); err != nil {
 		fmt.Printf("Error starting User server: %s\n", err)
 	}
-	// Main app =================================================
 }
 
 // Alive Readiness Check

@@ -82,3 +82,7 @@ Content-Type: application/json
     "id": 5
   }
 }
+
+### Account Alive
+GET http://localhost:7003/alive
+Content-Type: application/json
