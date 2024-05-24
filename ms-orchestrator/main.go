@@ -8,7 +8,9 @@ import (
 
 // Account Creation
 // 1. Account Service receive action for create account
-// 2. Orchestrator
+// 2. Orchestrator create saga
+// 3. Making transactions
+// 4. Commit if ok, revert if errors
 
 func main() {
 	// Connect to NATS
