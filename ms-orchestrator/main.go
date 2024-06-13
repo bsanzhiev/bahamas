@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/nats-io/nats.go"
 	"log"
 	"time"
+
+	"github.com/nats-io/nats.go"
 )
 
 // Account Creation
@@ -18,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error connecting NATS: %v", err)
 	}
-	defer nc.Close()
+	defer nc.Drain()
 
 	// Subscribe to start.saga to initiate saga
 	nc.Subscribe("start.saga", func(m *nats.Msg) {

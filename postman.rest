@@ -1,9 +1,9 @@
 ### Gateway alive
-GET localhost:7001/alive
+GET http://localhost:7001/alive
 Accept: application/json
 
 ### Users alive
-GET localhost:7002/alive
+GET http://localhost:7002/alive
 Accept: application/json
 
 ### Get All Users
@@ -67,7 +67,7 @@ Content-Type: application/json
     "username": "yaponchik",
     "first_name": "Vyacheslav",
     "last_name": "Ivankov",
-    "email": "yaponchik@lhvs.gr"
+    "email": "yaponchik@lhvs.vor"
   }
 }
 

@@ -1,23 +1,4 @@
-version: "3"
 services:
-  zookeeper:
-    image: "confluentinc/cp-zookeeper:latest"
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-    networks:
-      - bahamas-network
-
-  kafka:
-    image: "confluentinc/cp-kafka:latest"
-    depends_on:
-      - zookeeper
-    env_file:
-      - ./broker/broker1.env
-    ports:
-      - "9092:9092"
-    networks:
-      - bahamas-network
-
   ms-gateway:
     build:
       context: .
@@ -52,10 +33,26 @@ services:
       - ./ms-accounts/.env
     networks:
       - bahamas-network
-    restart: always
+    restart:
+      always
 
-networks:
-  bahamas-network:
+  # zookeeper:
+  #   image: "confluentinc/cp-zookeeper:latest"
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #   networks:
+  #     - bahamas-network
+
+  # kafka:
+  #   image: "confluentinc/cp-kafka:latest"
+  #   depends_on:
+  #     - zookeeper
+  #   env_file:
+  #     - ./broker/broker1.env
+  #   ports:
+  #     - "9092:9092"
+  #   networks:
+  #     - bahamas-network
 
   # db:
   #   image: postgres:latest
@@ -67,3 +64,6 @@ networks:
   #   ports:
   #     - "5432:5432"
   #   restart: always
+
+networks:
+  bahamas-network:
