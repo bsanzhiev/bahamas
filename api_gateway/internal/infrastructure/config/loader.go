@@ -1,14 +1,24 @@
 package config
 
 type Config struct {
-	// Define configuration fields
-	// ...
+	CustomerServiceURL    string
+	TransactionServiceURL string
+	AuthSecret            string
+	HTTP                  HTTP
 }
 
-func Load() *Config {
+type HTTP struct {
+	Port string
+}
+
+func Load() (*Config, error) {
 	return &Config{
-		// Load configuration from environment variables
-		// or defaults if not set
-		// ...
-	}
+			AuthSecret:            "secret",
+			CustomerServiceURL:    "localhost:50051",
+			TransactionServiceURL: "localhost:50052",
+			HTTP: HTTP{
+				Port: "8080",
+			},
+		},
+		nil // Add error handling
 }
