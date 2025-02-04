@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option go_package = "github.com/bsanzhiev/bahamas/libs/protobuf/common;pb";
+
+package bahamas.protobuf.common;
+
+// Example message for a user
+message Address {
+    string street = 1;
+    string city = 2;
+    string state = 3;
+    string zip = 4;
+}

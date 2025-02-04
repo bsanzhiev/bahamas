@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package bahamas.protobuf.customers;
+
+option go_package = "github.com/bsanzhiev/bahamas/libs/protobuf/customers;pb";
+
+import "shared/common.proto";
+
+service CustomerService {
+    rpc GetCustomer(GetCustomerRequest) returns (Customer);
+}
+
+message GetCustomerRequest {
+    string id = 1;
+}
+
+message Customer {
+    string id = 1;
+    string name = 2;
+    bahamas.protobuf.common.Address address = 3;
+}
