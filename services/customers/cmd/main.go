@@ -2,6 +2,9 @@ package main
 
 import (
 	"customers_service/internal/infrastructure/config"
+	customer_kafka "customers_service/internal/infrastructure/kafka"
+	"customers_service/internal/infrastructure/postgres"
+	"customers_service/internal/interfaces/message_consumer"
 	"log"
 
 	"google.golang.org/grpc"
@@ -19,7 +22,7 @@ func main() {
 	defer pgRepo.Close()
 
 	// Kafka producer
-	kafkaProducer := kafka.NewPublisher(cfg.Kafka)
+	kafkaProducer := customer_kafka.NewPublisher(cfg.Kafka)
 
 	// Use cases
 	createUC := usecases.NewCreateCustomerUseCase(pgRepo, kafkaProducer)
@@ -29,10 +32,11 @@ func main() {
 	grpcServer := grpc.NewServer(grpcHandler)
 
 	// Start Kafka event consumer
-	kafkaConsumer := message_consumer.NewKafkaConsumer(cfg.Kafka.Brokers)
+	kafkaConsumer := message_consumer.NewKafkaConsumer(cfg.Kafka.Brokers, cfg.Kafka.Topic)
 	kafkaConsumer.Subscribe("loan_approved", loadApprovedHandler)
 
 	// Start servers
 	go grpcServer.Start(cfg.GRPC.Port)
 	kafkaConsumer.Run()
+
 }
