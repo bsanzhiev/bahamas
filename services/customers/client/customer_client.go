@@ -1,8 +1,22 @@
 package client
 
-import pb "github.com/bsanzhiev/bagamas/libs/pb/customers"
+import (
+	"context"
+
+	pb "github.com/bsanzhiev/bahamas/libs/pb/customers"
+	"google.golang.org/grpc"
+)
 
 type CustomerClient struct {
-	// proto is packet from customers/proto
 	grpcClient pb.CustomerServiceClient
+}
+
+func NewCustomerService(conn *grpc.ClientConn) *CustomerClient {
+	return &CustomerClient{
+		grpcClient: pb.NewCustomerServiceClient(conn),
+	}
+}
+
+func (c *CustomerClient) GetCustomer(ctx context.Context, id string) (*pb.Customer, error) {
+	return c.grpcClient.GetCustomer(ctx, &pb.GetCustomerRequest{Id: id})
 }
