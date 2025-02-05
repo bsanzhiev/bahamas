@@ -1,11 +1,6 @@
 package main
 
 import (
-	"api_gateway/internal/application/services"
-	"api_gateway/internal/infrastructure/config"
-	"api_gateway/internal/infrastructure/http/middleware"
-	"api_gateway/internal/infrastructure/http/server"
-	"api_gateway/internal/interfaces/http_handler"
 	"context"
 	"log"
 	"net/http"
@@ -14,6 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	gateway_services "github.com/bsanzhiev/bahamas/api_gateway/internal/application/services"
+	"github.com/bsanzhiev/bahamas/api_gateway/internal/infrastructure/config"
+	"github.com/bsanzhiev/bahamas/api_gateway/internal/infrastructure/http/server"
 	"google.golang.org/grpc"
 )
 
@@ -45,8 +43,8 @@ func main() {
 	defer transactionConn.Close()
 
 	// Init services
-	customerService := services.NewCustomerService(customerConn)
-	transactionService := services.NewTransactionService(transactionConn)
+	customerService := gateway_services.NewCustomerService(customerConn)
+	transactionService := gateway_services.NewTransactionService(transactionConn)
 
 	// Init HTTP handlers
 	customerHandler := http_handler.NewCustomerHandler(customerService, logger)
