@@ -2,8 +2,9 @@ syntax = "proto3";
 
 package bahamas.protobuf.customers;
 
-option go_package = "github.com/bsanzhiev/bahamas/libs/protobuf/customers;pb";
+option go_package = "github.com/bsanzhiev/bahamas/libs/pb/customers;pb";
 
+// Correct import: it's relative to proto_root
 import "shared/common.proto";
 
 service CustomerService {
@@ -17,5 +18,6 @@ message GetCustomerRequest {
 message Customer {
     string id = 1;
     string name = 2;
+    // Use the correct fully-qualified name for Address from common.proto
     bahamas.protobuf.common.Address address = 3;
 }

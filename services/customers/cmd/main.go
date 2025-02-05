@@ -1,11 +1,12 @@
 package main
 
 import (
-	"customers_service/internal/infrastructure/config"
-	customer_kafka "customers_service/internal/infrastructure/kafka"
-	"customers_service/internal/infrastructure/postgres"
-	"customers_service/internal/interfaces/message_consumer"
 	"log"
+
+	"github.com/bsanzhiev/bahamas/services/customers/internal/infrastructure/config"
+	customer_kafka "github.com/bsanzhiev/bahamas/services/customers/internal/infrastructure/kafka"
+	"github.com/bsanzhiev/bahamas/services/customers/internal/infrastructure/postgres"
+	"github.com/bsanzhiev/bahamas/services/customers/internal/interfaces/message_consumer"
 
 	"google.golang.org/grpc"
 )

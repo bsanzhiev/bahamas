@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/bsanzhiev/bahamas/libs/protobuf/common;pb";
+option go_package = "github.com/bsanzhiev/bahamas/libs/pb/shared;pb";
 
 package bahamas.protobuf.common;
 
