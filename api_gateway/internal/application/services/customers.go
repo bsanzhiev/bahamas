@@ -11,12 +11,17 @@ type CustomerService struct {
 	customerClient *client.CustomerClient
 }
 
+// type Customer struct {
+// 	ID   string
+// 	Name string
+// }
+
 func NewCustomerService(conn *grpc.ClientConn) *CustomerService {
 	return &CustomerService{
 		customerClient: client.NewCustomerService(conn),
 	}
 }
 
-func (s *CustomerService) GetCustomer(id string) (interface{}, error) {
-	return s.customerClient.GetCustomer(context.Background(), id)
+func (s *CustomerService) GetCustomerByID(id string) (interface{}, error) {
+	return s.customerClient.GetCustomerByID(context.Background(), id)
 }

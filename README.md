@@ -149,3 +149,21 @@ customers/
 └── Dockerfile                  # Мультистейдж-сборка
 
 ```
+
+get customer: 
+1. Клиент отправляет HTTP-запрос (например, через REST API) в api_gateway.
+2. В api_gateway/cmd/main.go инициализируется HTTP-обработчик (customerHandler), который отвечает за обработку входящих HTTP-запросов.
+```go
+	customerHandler := http_handler.NewCustomerHandler(*customerService, logger)
+```
+3. HTTP-обработчик (customerHandler) принимает HTTP-запрос, парсит его и вызывает соответствующий метод в customerService.
+4. customerService — это слой бизнес-логики (Use Case), который знает, как обработать запрос и взаимодействовать с микросервисом customers.
+5. customerService преобразует данные из HTTP-запроса в формат, понятный для gRPC.
+6. Затем он отправляет gRPC-запрос в микросервис customers.
+7. В микросервисе customers есть gRPC-обработчик (grpc_handler/customer.go), который принимает запрос.
+8. Этот обработчик вызывает соответствующий метод в слое бизнес-логики (Use Case) микросервиса customers.
+9. Use Case в микросервисе customers выполняет необходимую бизнес-логику (например, получение данных о клиенте из базы данных).
+10. Результат возвращается обратно в gRPC-обработчик.
+11. Микросервис customers отправляет gRPC-ответ обратно в api_gateway.
+12. customerService в api_gateway получает ответ и преобразует его в HTTP-формат.
+13. HTTP-обработчик (customerHandler) формирует HTTP-ответ и отправляет его клиенту.

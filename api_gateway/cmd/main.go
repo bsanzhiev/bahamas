@@ -12,6 +12,7 @@ import (
 	gateway_services "github.com/bsanzhiev/bahamas/api_gateway/internal/application/services"
 	"github.com/bsanzhiev/bahamas/api_gateway/internal/infrastructure/config"
 	"github.com/bsanzhiev/bahamas/api_gateway/internal/infrastructure/http/server"
+	"github.com/bsanzhiev/bahamas/api_gateway/internal/interfaces/http_handler"
 	"google.golang.org/grpc"
 )
 
@@ -44,11 +45,11 @@ func main() {
 
 	// Init services
 	customerService := gateway_services.NewCustomerService(customerConn)
-	transactionService := gateway_services.NewTransactionService(transactionConn)
+	// transactionService := gateway_services.NewTransactionService(transactionConn)
 
 	// Init HTTP handlers
-	customerHandler := http_handler.NewCustomerHandler(customerService, logger)
-	transactionHandler := http_handler.NewTransactionHandler(transactionService, logger)
+	customerHandler := http_handler.NewCustomerHandler(*customerService, logger)
+	// transactionHandler := http_handler.NewTransactionHandler(transactionService, logger)
 
 	// Setup middleware
 	chain := middleware.Chain(
@@ -59,7 +60,7 @@ func main() {
 	// Setup routes
 	router := server.NewRouter()
 	router.Handle("/api/v1/customers", chain.Then(handlers.HandleCustomers(customerHandler)))
-	router.Handle("/api/v1/transactions", chain.Then(handlers.HandleTransactions(transactionHandler)))
+	// router.Handle("/api/v1/transactions", chain.Then(handlers.HandleTransactions(transactionHandler)))
 
 	// Setup HTTP server
 	srv := server.NewServer(cfg.HTTP.Port, router, logger)

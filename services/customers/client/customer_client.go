@@ -17,6 +17,6 @@ func NewCustomerService(conn *grpc.ClientConn) *CustomerClient {
 	}
 }
 
-func (c *CustomerClient) GetCustomer(ctx context.Context, id string) (*pb.Customer, error) {
+func (c *CustomerClient) GetCustomerByID(ctx context.Context, id string) (*pb.Customer, error) {
 	return c.grpcClient.GetCustomer(ctx, &pb.GetCustomerRequest{Id: id})
 }
