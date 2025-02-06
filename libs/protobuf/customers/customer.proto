@@ -7,17 +7,20 @@ option go_package = "github.com/bsanzhiev/bahamas/libs/pb/customers;pb";
 // Correct import: it's relative to proto_root
 import "shared/common.proto";
 
+message Customer {
+  string id = 1;
+  string name = 2;
+  bahamas.protobuf.common.Address address = 3;
+}
+
 service CustomerService {
-    rpc GetCustomer(GetCustomerRequest) returns (Customer);
+  rpc GetCustomer(GetCustomerRequest) returns (Customer);
 }
 
 message GetCustomerRequest {
-    string id = 1;
+  Customer customer = 1;
 }
 
-message Customer {
-    string id = 1;
-    string name = 2;
-    // Use the correct fully-qualified name for Address from common.proto
-    bahamas.protobuf.common.Address address = 3;
+message GetCustomerResponse {
+  Customer customer = 1;
 }
